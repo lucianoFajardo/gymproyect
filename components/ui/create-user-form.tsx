@@ -1,5 +1,4 @@
 "use client"
-
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -28,24 +27,43 @@ import { CreateClientSchema } from "@/lib/zod"
 import { toast } from "sonner"
 import { Check, ChevronsUpDown } from "lucide-react"
 import { crateClientAction } from "@/actions/create-client-action"
+import { useEffect, useState } from "react"
+import { getSubscriptionPlanAction } from "@/actions/get-subscription-plan-action"
 
-export default function ProfileForm() {
+export default function ProfileForm() {  
+    interface Plans {
+        value: string,
+        label: string,
+    }
+    const [valuesPlan, setValuesPlan] = useState<Plans[]>([]);
+    useEffect(() => {
+        //* Este useEffect se encarga de traer los planes que el gym tiene disponibles los transforma a el formato que necesitamos.
+        const fetchSubscriptionPlans = async () => {
+            try {
+                const subscriptionPlans = await getSubscriptionPlanAction();
+                // Verificar que existan planes de suscripción disponibles.
+                if (!subscriptionPlans || subscriptionPlans.length === 0) {
+                    throw new Error("No se encontraron planes de suscripción disponibles.");
+                }
+                // Mapear los planes para el select
+                const mappedPlans = subscriptionPlans.map((plan) => ({
+                    value: plan.id,
+                    label: plan.namePrice,
+                }));
+                setValuesPlan(mappedPlans);
+            } catch (error) {
+                console.error("Error al obtener los planes de suscripción:", error);
+            }
+        };
+        fetchSubscriptionPlans();
+    }, []);
+
     const paymentMethods = [
         { value: "debit", label: "Tarjeta de débito" },
         { value: "credit", label: "Tarjeta de crédito" },
         { value: "cash", label: "Efectivo" },
         { value: "transfer", label: "Transferencia" },
-        {}
-    ]
-
-    // Los valores tienen que ser modificables por el cliente ya que el le puede asignar los planes
-    const valuesPlan = [
-        { value: "$5.000", label: "Diario" },
-        { value: "$25.000", label: "Mensual" },
-        { value: "$35.000", label: "Trimestral" },
-        { value: "$45.000", label: "Semestral" },
-        { value: "$120.000", label: "Especial" },
-    ]
+    ];
 
     const form = useForm<z.infer<typeof CreateClientSchema>>({
         resolver: zodResolver(CreateClientSchema), defaultValues: {
@@ -55,26 +73,25 @@ export default function ProfileForm() {
             age: 0,
             gmail: "",
             startPlan: "",
-            subscriptionPlanId: "",
+            subscriptionPlanId: '',
             methodpay: "",
         },
     })
 
     const onSubmit = async (value: z.infer<typeof CreateClientSchema>) => {
-        try {
-            const newClient = await crateClientAction(value);
-            // Manejar la respuesta exitosa (ej: redireccionar, mostrar mensaje)
-            console.log("Cliente creado:", newClient);
+        try { 
+            await crateClientAction(value);
             toast.success("Cliente creado con éxito", {
-                description: value.name,
+                description: 'Cliente creado con exito y registrado en la base de datos.',
             })
-            // Espera un momento antes de resetear el formulario
             setTimeout(() => {
                 form.reset() // Resetea todos los campos del formulario
             }, 3000) // 3 segundos para mostr
-        } catch (error) {
-            // Manejar el error (ej: mostrar mensaje de error al usuario)
-            console.error("Error al crear el cliente en el formulario:", error);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_) {
+            toast.error("No se puede crear el cliente", {
+                description: 'Revisar formulario de ingreso.',
+            })
         }
     }
 
@@ -83,7 +100,6 @@ export default function ProfileForm() {
             <div className="w-full max-w-2xl px-4">
                 <h1 className="text-2xl font-bold mb-6 text-center">Crear Cliente</h1>
                 <Form {...form}>
-                    <h1></h1>
                     <form
                         className="space-y-8 m-4"
                         onSubmit={form.handleSubmit(onSubmit)}
@@ -166,9 +182,9 @@ export default function ProfileForm() {
                                                     variant="outline"
                                                     role="combobox"
                                                     className="w-full justify-between"
-                                                >
+                                                > 
                                                     {field.value
-                                                        ? valuesPlan.find((method) => method.value === field.value)?.label
+                                                        ? valuesPlan.find((plan) => plan.value === field.value)?.label
                                                         : "Selecciona un tipo de plan"}
                                                     <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
                                                 </Button>
@@ -177,15 +193,15 @@ export default function ProfileForm() {
                                                 <Command>
                                                     <CommandInput placeholder="Selecciona un tipo de plan..." className="h-9" />
                                                     <CommandList>
-                                                        <CommandEmpty>No se encontro un plan disponible</CommandEmpty>
+                                                        <CommandEmpty>No se encontró un plan disponible</CommandEmpty>
                                                         <CommandGroup>
-                                                            {valuesPlan.map((e) => (
+                                                            {valuesPlan.map((plan) => (
                                                                 <CommandItem
-                                                                    key={e.value}
-                                                                    onSelect={() => field.onChange(e.value)}
+                                                                    key={plan.value}
+                                                                    onSelect={() => field.onChange(plan.value)}
                                                                 >
-                                                                    {e.label}
-                                                                    {field.value === e.value && (
+                                                                    {plan.label}
+                                                                    {field.value === plan.value && (
                                                                         <Check className="ml-auto h-4 w-4 text-primary" />
                                                                     )}
                                                                 </CommandItem>
@@ -214,7 +230,7 @@ export default function ProfileForm() {
                                                     className="w-full justify-start text-left font-normal"
                                                 >
                                                     {field.value
-                                                        ? format(new Date(field.value), "PPP")
+                                                        ? format(new Date(field.value), "P")
                                                         : "Selecciona una fecha"}
                                                 </Button>
                                             </PopoverTrigger>
@@ -226,8 +242,6 @@ export default function ProfileForm() {
                                                     onSelect={(date) => {
                                                         if (date) {
                                                             const dateString = date.toISOString();
-                                                            // Convert to string format
-                                                            console.log(dateString); // Log the string value
                                                             field.onChange(dateString); // Set the value as a string
                                                         }
                                                     }}
@@ -287,7 +301,7 @@ export default function ProfileForm() {
                                 </FormItem>
                             )}
                         />
-                        <Button type="submit" > Crear cliente</Button>
+                        <Button type="submit" >Crear cliente</Button>
                     </form>
                 </Form>
             </div>
@@ -295,4 +309,4 @@ export default function ProfileForm() {
     )
 }
 
-//TODO: solcionar el problema de la fecha, ya que no se puede guardar en la base de datos, ya que no se puede transformar a string, por lo que se debe de transformar a string antes de guardarlo en la base de datos.
+//TODO : ya se puede obtener el plan y crear un cliente , estoy en una rama distinta a la main

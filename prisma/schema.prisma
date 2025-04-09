@@ -25,7 +25,6 @@ model User {
   Authenticator Authenticator[]
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
-  client        CreateClientModel[]
 }
 
 model Account {
@@ -90,13 +89,11 @@ model CreateClientModel {
   gmail              String
   startPlan          DateTime         @default(now())
   statusPlan         String
-  subscriptionPlanId String
-  subscriptionPlan   SubscriptionPlan @relation(fields: [subscriptionPlanId], references: [id])
+  subscriptionPlanId String?          // Permitir valores nulos
+  subscriptionPlan   SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id]) // Relación opcional
   methodpay          String
   createDateAt       DateTime         @default(now())
   updateDateAt       DateTime         @updatedAt
-  userId             String
-  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 }

@@ -31,7 +31,8 @@ export const CreateClientSchema = object({
     age: coerce.number({required_error: "Edad debe de ser un numero positivo"}).min(1, { message: "La edad debe ser un número positivo." }).max(90, { message: "La edad debe ser menor a 90." }),
     gmail: string({required_error: "Formato de correo electronico invalido"}).email({ message: "Formato de correo electrónico inválido." }),
     startPlan: string({required_error:"Selecciona una fecha de inicio"}),
-    subscriptionPlanId: string({required_error:"Formato de pago invalido"}).regex(/^\$\d{1,}\.?\d{0,}$/, { message: "Formato de pago inválido ($ seguido de números)." }),
+    subscriptionPlanId: string({required_error: "Seleccionar un plan"}),  // eliminar despues este registro
     methodpay: string({required_error:"Seleccione un metodo de pago"}), // Puedes refinar esto con un enum si tienes métodos de pago específicos
 })
 
+    //subscriptionPlanId: string({required_error:"Formato de pago invalido"}).regex(/^\$\d{1,}\.?\d{0,}$/, { message: "Formato de pago inválido ($ seguido de números)." }),

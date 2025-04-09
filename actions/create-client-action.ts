@@ -13,7 +13,6 @@ export const crateClientAction = async (values: z.infer<typeof CreateClientSchem
             throw new Error("Datos inválidos para crear el cliente");
         }
         const data = parsed.data;
-        const userId = 'dd'
 
         // Crear el cliente en la base de datos
         const newClient = await db.createClientModel.create({
@@ -24,13 +23,9 @@ export const crateClientAction = async (values: z.infer<typeof CreateClientSchem
                 age: data.age.toString(),
                 gmail: data.gmail,
                 startPlan: data.startPlan,
-                subscriptionPlanId: data.subscriptionPlanId,
+                subscriptionPlanId: data.subscriptionPlanId, // Solo pasamos el ID del plan
                 methodpay: data.methodpay,
                 statusPlan: "Activo", // todos los clientes que se ingresan se les asigna el plan activo hasta que se cancele su suscripcion.
-                userId: userId,
-            },
-            include: {
-                subscriptionPlan: true, // Incluir datos del plan de suscripción relacionado
             },
         });
         console.log("Cliente creado con éxito", newClient);
