@@ -1,5 +1,4 @@
 'use server'
-
 import { db } from "@/lib/db";
 
 export const getDataUserAction = async () => {   
@@ -8,22 +7,40 @@ export const getDataUserAction = async () => {
             select:{
                 id: true,
                 name: true,
+                age: true,
+                lastname: true,
+                phone: true,
                 gmail: true,
-                subscriptionPlanId: true,
+                startPlan: true,
                 statusPlan: true,
                 subscriptionPlan:{
                     select:{
                         namePrice: true,
+                        price: true,
                     }
                 },
                 createdAt: true,
             }
         })
+        // Parse data to JSON with string values
+        const parsedUsers = users.map(user => ({
+            id: String(user.id),
+            name: String(user.name),
+            lastname: String(user.lastname),
+            age: user.age ? String(user.age) : "",
+            phone: user.phone ? String(user.phone) : "",
+            gmail: String(user.gmail),
+            startPlan: user.startPlan ? String(user.startPlan.toLocaleDateString()) : "",
+            statusPlan: String(user.statusPlan),
+            subscriptionPlan: user.subscriptionPlan?.namePrice ? String(user.subscriptionPlan.namePrice) : "",
+            price: user.subscriptionPlan?.price ? String(user.subscriptionPlan.price) : "",
+            createdAt: String(user.createdAt),
+        }));
         //Verificar que existan usuarios registrados.
-        if (!users || users.length === 0) {
+        if (!parsedUsers || parsedUsers.length === 0) {
             throw new Error("No se encontraron usuarios registrados.");
         }
-        return users
+        return parsedUsers
     } catch (error) {
         console.error("Error al obtener los usuarios", error);
         throw new Error("No se pudo obtener los usuarios");

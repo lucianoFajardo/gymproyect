@@ -9,111 +9,39 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Edit, Trash2 } from "lucide-react"
 import { getDataUserAction } from "@/actions/get-data-user-action"
-
-// Cambiar el tipo User para que coincida con el nuevo modelo de datos
-interface User {
-    id: string,
-    name: string,
-    gmail: string,
-    statusPlan: string,
-    subscriptionPlan: {
-        namePrice: string | null,
-    },
-    createdAt: Date,
-}
+import { UserModel } from "../../Model/User-model"
+import checkSubscriptionExpiration from "@/actions/expiration-subscription-action"
 
 export default function UserTable() {
 
-    const [data, setData] = useState<User[]>([])
-
     useEffect(() => {
-        getDataUserAction().then((e) => {
-            setData(e)
-            console.log(data);
-        })
-    },)
-    // Actualizar los datos de ejemplo
-    const [users, setUsers] = useState<User[]>([
-        {
-            id: 'dassdas',
-            name: "Carlos",
-            lastname: "Rodríguez",
-            phone: "555-123-4567",
-            age: '15',
-            gmail: "carlos@ejemplo.com",
-            startPlan: "2023-01-15",
-            statusPlan: "Activo",
-            subscriptionPlan: "Premium",
-            methodpay: "Tarjeta",
-        },
-        {
-            id: 'dda458766',
-            name: "María",
-            lastname: "López",
-            phone: "555-234-5678",
-            age: '15',
-            gmail: "maria@ejemplo.com",
-            startPlan: "2023-03-22",
-            statusPlan: "Activo",
-            subscriptionPlan: "Básico",
-            methodpay: "PayPal",
-        },
-        {
-            id: '4d86a22s5d',
-            name: "Juan",
-            lastname: "Pérez",
-            phone: "555-345-6789",
-            age: '15',
-            gmail: "juan@ejemplo.com",
-            startPlan: "2022-11-05",
-            statusPlan: "Inactivo",
-            subscriptionPlan: "Premium",
-            methodpay: "Transferencia",
-        },
-        {
-            id: 'dd87q9s26<',
-            name: "Ana",
-            lastname: "Martínez",
-            phone: "555-456-7890",
-            age: '15',
-            gmail: "ana@ejemplo.com",
-            startPlan: "2023-05-10",
-            statusPlan: "Activo",
-            subscriptionPlan: "Familiar",
-            methodpay: "Tarjeta",
-        },
-        {
-            id: '89wwrcatgha',
-            name: "Roberto",
-            lastname: "Sánchez",
-            phone: "555-567-8901",
-            age: '15',
-            gmail: "roberto@ejemplo.com",
-            startPlan: "2023-02-18",
-            statusPlan: "Activo",
-            subscriptionPlan: "Básico",
-            methodpay: "PayPal",
-        },
-    ])
+        getDataUserAction().then((data) => {
+            console.log("Data fetched:", data)
+            setUsers(data)
+        });
+
+    }, []);
+
+    const [users, setUsers] = useState<UserModel[]>([])
 
     // Estado para selección de filas
     const [selectedRows, setSelectedRows] = useState<string[]>([])
-
     // Estados para edición
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-    const [currentUser, setCurrentUser] = useState<User | null>(null)
+    const [currentUser, setCurrentUser] = useState<UserModel | null>(null)
 
     // Actualizar el estado inicial del formulario de edición
-    const [editForm, setEditForm] = useState<Omit<User, "id">>({
+    const [editForm, setEditForm] = useState<Omit<UserModel, "id">>({
         name: "",
-        lastname: "",
         phone: "",
-        age: '',
+        lastname: "",
+        age: "",
         gmail: "",
         startPlan: "",
         statusPlan: "",
         subscriptionPlan: "",
-        methodpay: "",
+        createdAt: "",
+        price: "",
     })
 
     // Manejar selección de fila
@@ -135,19 +63,23 @@ export default function UserTable() {
     }
 
     // Actualizar la función handleEdit para incluir todos los campos
-    const handleEdit = (user: User) => {
+    const handleEdit = (user: UserModel) => {
         setCurrentUser(user)
         setEditForm({
             name: user.name,
-            lastname: user.lastname,
             phone: user.phone,
+            lastname: user.lastname,
             age: user.age,
             gmail: user.gmail,
             startPlan: user.startPlan,
             statusPlan: user.statusPlan,
             subscriptionPlan: user.subscriptionPlan,
-            methodpay: user.methodpay,
+            createdAt: user.createdAt,
+            price: user.price,
         })
+        checkSubscriptionExpiration(user.startPlan, 5).then((i) => {
+            console.log("Subscription expiration checked; ", i)
+        });
         setIsEditDialogOpen(true)
     }
 
@@ -203,9 +135,10 @@ export default function UserTable() {
                             <TableHead>Edad</TableHead>
                             <TableHead>Email</TableHead>
                             <TableHead>Inicio Plan</TableHead>
+                            <TableHead>Vencimiento plan</TableHead>
                             <TableHead>Estado</TableHead>
-                            <TableHead>Plan</TableHead>
-                            <TableHead>Método Pago</TableHead>
+                            <TableHead>Plan (Nombre)</TableHead>
+                            <TableHead>Plan (Precio)</TableHead>
                             <TableHead className="text-right">Acciones</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -232,6 +165,9 @@ export default function UserTable() {
                                     <TableCell>{user.age}</TableCell>
                                     <TableCell>{user.gmail}</TableCell>
                                     <TableCell>{user.startPlan}</TableCell>
+                                    {/* aqui tiene que calcular la fecha de los clientes y sacarle cuando se le vende la subscripcion */}
+                                    <TableCell>Vencimiento plan</TableCell>
+                                    {/* Cambiar el color del estado del plan según su valor */}
                                     <TableCell>
                                         <span
                                             className={`px-2 py-1 rounded-full text-xs ${user.statusPlan === "Activo" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
@@ -240,7 +176,7 @@ export default function UserTable() {
                                         </span>
                                     </TableCell>
                                     <TableCell>{user.subscriptionPlan}</TableCell>
-                                    <TableCell>{user.methodpay}</TableCell>
+                                    <TableCell>{user.price ? `$${user.price}` : "N/A"}</TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
                                             <Button variant="ghost" size="icon" onClick={() => handleEdit(user)}>
@@ -300,7 +236,7 @@ export default function UserTable() {
                                     id="age"
                                     type="text"
                                     value={editForm.age}
-                                    onChange={(e) => setEditForm({ ...editForm, age: Number(e.target.value) })}
+                                    onChange={(e) => setEditForm({ ...editForm, age: String(e.target.value) })}
                                 />
                             </div>
                         </div>
@@ -339,14 +275,6 @@ export default function UserTable() {
                                     onChange={(e) => setEditForm({ ...editForm, subscriptionPlan: e.target.value })}
                                 />
                             </div>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="methodpay">Método de Pago</Label>
-                            <Input
-                                id="methodpay"
-                                value={editForm.methodpay}
-                                onChange={(e) => setEditForm({ ...editForm, methodpay: e.target.value })}
-                            />
                         </div>
                     </div>
                     <DialogFooter>
