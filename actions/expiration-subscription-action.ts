@@ -2,7 +2,6 @@ async function checkSubscriptionExpiration(startSubscription: string, subscripti
     try {
         const startDate = new Date(startSubscription); // Convertir el string a fecha
         const currentDate = new Date(); // Fecha actual
-
         // Calcular la fecha de expiración
         const expireDate = new Date(startDate);
         expireDate.setDate(expireDate.getDate() + subscriptionDurationDays);

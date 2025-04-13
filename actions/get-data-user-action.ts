@@ -30,7 +30,7 @@ export const getDataUserAction = async () => {
             age: user.age ? String(user.age) : "",
             phone: user.phone ? String(user.phone) : "",
             gmail: String(user.gmail),
-            startPlan: user.startPlan ? String(user.startPlan.toLocaleDateString()) : "",
+            startPlan: user.startPlan ? String(user.startPlan) : "",
             statusPlan: String(user.statusPlan),
             subscriptionPlan: user.subscriptionPlan?.namePrice ? String(user.subscriptionPlan.namePrice) : "",
             price: user.subscriptionPlan?.price ? String(user.subscriptionPlan.price) : "",

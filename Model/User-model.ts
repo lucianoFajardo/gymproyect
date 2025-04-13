@@ -1,5 +1,5 @@
 "use client";
-// Cambiar el tipo User para que coincida con el nuevo modelo de datos
+// Cambiar el tipo UserModel para que coincida con el nuevo modelo de datos
 export interface UserModel {
     id: string;
     name: string;

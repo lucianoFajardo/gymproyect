@@ -13,17 +13,13 @@ import { UserModel } from "../../Model/User-model"
 import checkSubscriptionExpiration from "@/actions/expiration-subscription-action"
 
 export default function UserTable() {
-
     useEffect(() => {
         getDataUserAction().then((data) => {
             console.log("Data fetched:", data)
             setUsers(data)
         });
-
     }, []);
-
     const [users, setUsers] = useState<UserModel[]>([])
-
     // Estado para selección de filas
     const [selectedRows, setSelectedRows] = useState<string[]>([])
     // Estados para edición
@@ -77,8 +73,8 @@ export default function UserTable() {
             createdAt: user.createdAt,
             price: user.price,
         })
-        checkSubscriptionExpiration(user.startPlan, 5).then((i) => {
-            console.log("Subscription expiration checked; ", i)
+        checkSubscriptionExpiration(user.startPlan, 7).then((i) => {
+            console.log("Estado de la subscripcion: ", i)
         });
         setIsEditDialogOpen(true)
     }
@@ -143,6 +139,7 @@ export default function UserTable() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
+
                         {users.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={11} className="text-center py-6 text-muted-foreground">
@@ -151,6 +148,7 @@ export default function UserTable() {
                             </TableRow>
                         ) : (
                             users.map((user) => (
+                            
                                 <TableRow key={user.id} className={selectedRows.includes(user.id) ? "bg-muted/50" : ""}>
                                     <TableCell>
                                         <Checkbox
@@ -164,7 +162,7 @@ export default function UserTable() {
                                     <TableCell>{user.phone}</TableCell>
                                     <TableCell>{user.age}</TableCell>
                                     <TableCell>{user.gmail}</TableCell>
-                                    <TableCell>{user.startPlan}</TableCell>
+                                    <TableCell>{new Date(user.startPlan).toLocaleDateString()}</TableCell>
                                     {/* aqui tiene que calcular la fecha de los clientes y sacarle cuando se le vende la subscripcion */}
                                     <TableCell>Vencimiento plan</TableCell>
                                     {/* Cambiar el color del estado del plan según su valor */}
@@ -253,7 +251,7 @@ export default function UserTable() {
                             <Label htmlFor="startPlan">Inicio del Plan</Label>
                             <Input
                                 id="startPlan"
-                                type="date"
+                                type="text"
                                 value={editForm.startPlan}
                                 onChange={(e) => setEditForm({ ...editForm, startPlan: e.target.value })}
                             />
