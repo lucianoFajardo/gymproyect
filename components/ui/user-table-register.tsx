@@ -12,14 +12,21 @@ import { getDataUserAction } from "@/actions/get-data-user-action"
 import { UserModel } from "../../Model/User-model"
 import checkSubscriptionExpiration from "@/actions/expiration-subscription-action"
 
+
 export default function UserTable() {
+
+    // Obtener los datos de los usuarios al cargar el componente
     useEffect(() => {
         getDataUserAction().then((data) => {
             console.log("Data fetched:", data)
             setUsers(data)
         });
     }, []);
+
+    // UseState para almacenar los datos y actualizar los estados
     const [users, setUsers] = useState<UserModel[]>([])
+    const [expireSubscription, setExpireSubscription] = useState<Record<string, string>>({});
+    const [userStatusMap, setUserStatusMap] = useState<Record<string, string>>({});
     // Estado para selección de filas
     const [selectedRows, setSelectedRows] = useState<string[]>([])
     // Estados para edición
@@ -39,6 +46,39 @@ export default function UserTable() {
         createdAt: "",
         price: "",
     })
+
+    // Estado para manejar la fecha de inicio del plan y su vencimiento
+    useEffect(() => {
+        if (users.length > 0) {
+            // Procesar todas las fechas de inicio de los planes
+            Promise.all(
+                users.map(async (user) => {
+                    const result = await checkSubscriptionExpiration(user.id, user.startPlan, 10); // aqui guardo el result de la fn
+                    console.log("status subscription", result.status, result.expireDate);
+                    return { id: user.id, expireDate: result.expireDate, status: result.status }; // Retornar el ID y la fecha de expiración
+                })
+            ).then((results) => {
+                // Crear el objeto con las fechas de expiración por ID de usuario que tengo registrado
+                const expirationMap = results.reduce((acc, { id, expireDate }) => {
+                    acc[id] = expireDate;
+                    return acc;
+                }, {} as Record<string, string>); // Typar los datos con la [Key - value] = Type 
+                setExpireSubscription(expirationMap);
+
+                // Crear el objeto con los estados de vencimiento de plan de usuario que tengo registrado
+                const statusMap = results.reduce((acc, { id, status }) => {
+                    acc[id] = status;
+                    return acc;
+                }, {} as Record<string, string>); // Typar los datos con la [Key - value] = Type 
+                setUserStatusMap(statusMap);
+
+            }).catch(error => {
+                console.error("Error calculating subscription expirations:", error);
+                // Opcionalmente, manejar el error en la UI
+            });
+        }
+    }, [users]); // Este useEffect se ejecuta cada vez que el estado 'users' cambia
+
 
     // Manejar selección de fila
     const handleRowSelect = (id: string) => {
@@ -73,9 +113,6 @@ export default function UserTable() {
             createdAt: user.createdAt,
             price: user.price,
         })
-        checkSubscriptionExpiration(user.startPlan, 7).then((i) => {
-            console.log("Estado de la subscripcion: ", i)
-        });
         setIsEditDialogOpen(true)
     }
 
@@ -103,8 +140,8 @@ export default function UserTable() {
     // Reemplazar la estructura de la tabla con los nuevos campos
     return (
         <div className="space-y-4">
-            <div className="flex justify-between items-center mb-4">
-                <h1 className="text-2xl font-bold text-center">Gestión de Usuarios</h1>
+            <div className="flex justify-between items-center m-4 p-2">
+                <h1 className="text-2xl font-bold"> Gestión de Miembros</h1>
                 <div className="space-x-2">
                     {selectedRows.length > 0 && (
                         <Button variant="destructive" onClick={handleDeleteSelected} size="sm">
@@ -114,7 +151,7 @@ export default function UserTable() {
                 </div>
             </div>
 
-            <div className="rounded-md border overflow-x-auto">
+            <div className="rounded-md border overflow-x-auto m-4">
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -132,9 +169,9 @@ export default function UserTable() {
                             <TableHead>Email</TableHead>
                             <TableHead>Inicio Plan</TableHead>
                             <TableHead>Vencimiento plan</TableHead>
-                            <TableHead>Estado</TableHead>
-                            <TableHead>Plan (Nombre)</TableHead>
-                            <TableHead>Plan (Precio)</TableHead>
+                            <TableHead>Estado(Membresia)</TableHead>
+                            <TableHead>Plan(Nombre)</TableHead>
+                            <TableHead>Plan(Precio)</TableHead>
                             <TableHead className="text-right">Acciones</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -148,7 +185,7 @@ export default function UserTable() {
                             </TableRow>
                         ) : (
                             users.map((user) => (
-                            
+
                                 <TableRow key={user.id} className={selectedRows.includes(user.id) ? "bg-muted/50" : ""}>
                                     <TableCell>
                                         <Checkbox
@@ -164,14 +201,23 @@ export default function UserTable() {
                                     <TableCell>{user.gmail}</TableCell>
                                     <TableCell>{new Date(user.startPlan).toLocaleDateString()}</TableCell>
                                     {/* aqui tiene que calcular la fecha de los clientes y sacarle cuando se le vende la subscripcion */}
-                                    <TableCell>Vencimiento plan</TableCell>
+                                    <TableCell>{expireSubscription[user.id]}</TableCell>
                                     {/* Cambiar el color del estado del plan según su valor */}
                                     <TableCell>
-                                        <span
-                                            className={`px-2 py-1 rounded-full text-xs ${user.statusPlan === "Activo" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
-                                        >
-                                            {user.statusPlan}
-                                        </span>
+                                        {userStatusMap[user.id] ? (
+                                            <span
+                                                className={`px-2 py-1 rounded-full text-xs ${userStatusMap[user.id] === "Activo" ? "bg-green-100 text-green-800" :
+                                                    userStatusMap[user.id] === "Inactivo" ? "bg-red-100 text-red-800" :
+                                                        "bg-gray-100 text-gray-800" // Estilo por defecto o para otros estados
+                                                    }`}
+                                            >
+                                                {userStatusMap[user.id]}
+                                            </span>
+                                        ) : (
+                                            <span className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">
+                                                Calculando...
+                                            </span>
+                                        )}
                                     </TableCell>
                                     <TableCell>{user.subscriptionPlan}</TableCell>
                                     <TableCell>{user.price ? `$${user.price}` : "N/A"}</TableCell>
@@ -198,7 +244,7 @@ export default function UserTable() {
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                 <DialogContent className="max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Editar Suscriptor</DialogTitle>
+                        <DialogTitle>Editar membresia</DialogTitle>
                     </DialogHeader>
                     <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto">
                         <div className="grid grid-cols-2 gap-4">
@@ -246,33 +292,6 @@ export default function UserTable() {
                                 value={editForm.gmail}
                                 onChange={(e) => setEditForm({ ...editForm, gmail: e.target.value })}
                             />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="startPlan">Inicio del Plan</Label>
-                            <Input
-                                id="startPlan"
-                                type="text"
-                                value={editForm.startPlan}
-                                onChange={(e) => setEditForm({ ...editForm, startPlan: e.target.value })}
-                            />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="statusPlan">Estado del Plan</Label>
-                                <Input
-                                    id="statusPlan"
-                                    value={editForm.statusPlan}
-                                    onChange={(e) => setEditForm({ ...editForm, statusPlan: e.target.value })}
-                                />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="subscriptionPlan">Plan de Suscripción</Label>
-                                <Input
-                                    id="subscriptionPlan"
-                                    value={editForm.subscriptionPlan}
-                                    onChange={(e) => setEditForm({ ...editForm, subscriptionPlan: e.target.value })}
-                                />
-                            </div>
                         </div>
                     </div>
                     <DialogFooter>
