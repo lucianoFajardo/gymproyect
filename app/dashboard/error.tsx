@@ -21,7 +21,7 @@ export default function Error({
       <h2 className='py-3'>Algo esta mal , intenta de nuevo si el error persiste contactate con nosotos.!</h2>
       <Button
         onClick={
-          // Attempt to recover by trying to re-render the segment
+          // fn para poder refrescar la app
           () => reset()
         }
       >

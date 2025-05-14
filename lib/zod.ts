@@ -35,4 +35,12 @@ export const CreateClientSchema = object({
     methodpay: string({required_error:"Seleccione un metodo de pago"}), // Puedes refinar esto con un enum si tienes métodos de pago específicos
 })
 
+export const UpdateClientSchema = object({
+    name: string({ required_error: "Nombre de cliente requerido" }).min(2, { message: "El nombre debe tener al menos 2 caracteres." }),
+    lastname: string({ required_error: "Apellido requerido"}).min(2, { message: "El apellido debe tener al menos 2 caracteres." }),
+    phone: string({required_error: "Telefono debe de contener 9 digitos"}).regex(/^\d{9}$/, { message: "El teléfono debe tener 9 dígitos." }),
+    age: coerce.string({required_error: "Edad debe de ser un numero positivo"}).min(1, { message: "La edad debe ser un número positivo." }).max(90, { message: "La edad debe ser menor a 90." }),
+    gmail: string({required_error: "Formato de correo electronico invalido"}).email({ message: "Formato de correo electrónico inválido." }),
+})
+
     //subscriptionPlanId: string({required_error:"Formato de pago invalido"}).regex(/^\$\d{1,}\.?\d{0,}$/, { message: "Formato de pago inválido ($ seguido de números)." }),

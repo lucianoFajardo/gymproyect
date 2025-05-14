@@ -30,12 +30,13 @@ import { crateClientAction } from "@/actions/create-client-action"
 import { useEffect, useState } from "react"
 import { getSubscriptionPlanAction } from "@/actions/get-subscription-plan-action"
 
-export default function ProfileForm() {  
+export default function ProfileForm() {
     interface Plans {
         value: string,
         label: string,
     }
     const [valuesPlan, setValuesPlan] = useState<Plans[]>([]);
+
     useEffect(() => {
         //* Este useEffect se encarga de traer los planes que el gym tiene disponibles los transforma a el formato que necesitamos.
         const fetchSubscriptionPlans = async () => {
@@ -79,7 +80,7 @@ export default function ProfileForm() {
     })
 
     const onSubmit = async (value: z.infer<typeof CreateClientSchema>) => {
-        try { 
+        try {
             await crateClientAction(value);
             toast.success("Cliente creado con éxito", {
                 description: 'Cliente creado con exito y registrado en la base de datos.',
@@ -87,7 +88,7 @@ export default function ProfileForm() {
             setTimeout(() => {
                 form.reset() // Resetea todos los campos del formulario
             }, 3000) // 3 segundos para mostr
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (_) {
             toast.error("No se puede crear el cliente", {
                 description: 'Revisar formulario de ingreso.',
@@ -150,7 +151,7 @@ export default function ProfileForm() {
                                 <FormItem>
                                     <FormLabel>Edad</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Ingrese edad de usuario" {...field} />
+                                        <Input type="number" placeholder="Ingrese edad de usuario" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -182,7 +183,7 @@ export default function ProfileForm() {
                                                     variant="outline"
                                                     role="combobox"
                                                     className="w-full justify-between"
-                                                > 
+                                                >
                                                     {field.value
                                                         ? valuesPlan.find((plan) => plan.value === field.value)?.label
                                                         : "Selecciona un tipo de plan"}

@@ -7,12 +7,15 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Edit, Trash2 } from "lucide-react"
+import { Edit, EyeIcon, Trash2 } from "lucide-react"
 import { getDataUserAction } from "@/actions/get-data-user-action"
 import { UserModel } from "../../Model/User-model"
 import checkSubscriptionExpiration from "@/actions/expiration-subscription-action"
+import { useQRCode } from 'next-qrcode';
+import { toast } from "sonner"
+import { updateUserAction } from "@/actions/update-data-user-action"
 
-
+//TODO : Seguir aqui despues tengo que pulir unas cuantas cosas mas y estariamos listos , recordar que downgraidie el reactDom y react 
 export default function UserTable() {
 
     // Obtener los datos de los usuarios al cargar el componente
@@ -22,9 +25,10 @@ export default function UserTable() {
             setUsers(data)
         });
     }, []);
-
+    const { Canvas } = useQRCode();
     // UseState para almacenar los datos y actualizar los estados
     const [users, setUsers] = useState<UserModel[]>([])
+
     const [expireSubscription, setExpireSubscription] = useState<Record<string, string>>({});
     const [userStatusMap, setUserStatusMap] = useState<Record<string, string>>({});
     // Estado para selección de filas
@@ -32,20 +36,25 @@ export default function UserTable() {
     // Estados para edición
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
     const [currentUser, setCurrentUser] = useState<UserModel | null>(null)
+    // Nuevos estados para el diálogo de "ver detalles"
+    const [isViewDetailsDialogOpen, setIsViewDetailsDialogOpen] = useState(false);
+    const [viewingUser, setViewingUser] = useState<UserModel | null>(null);
 
     // Actualizar el estado inicial del formulario de edición
-    const [editForm, setEditForm] = useState<Omit<UserModel, "id">>({
+    const [editForm, setEditForm] = useState<Omit<UserModel, "id" | "statusPlan" | "startPlan" | "subscriptionPlan" | "createdAt" | "price">>({
         name: "",
         phone: "",
         lastname: "",
         age: "",
         gmail: "",
-        startPlan: "",
-        statusPlan: "",
-        subscriptionPlan: "",
-        createdAt: "",
-        price: "",
     })
+
+    // fn para manejar la vista de detalles del usuario
+    const handleViewDetails = (user: UserModel) => {
+        setViewingUser(user);
+        setIsViewDetailsDialogOpen(true);
+    };
+
 
     // Estado para manejar la fecha de inicio del plan y su vencimiento
     useEffect(() => {
@@ -54,7 +63,6 @@ export default function UserTable() {
             Promise.all(
                 users.map(async (user) => {
                     const result = await checkSubscriptionExpiration(user.id, user.startPlan, 10); // aqui guardo el result de la fn
-                    console.log("status subscription", result.status, result.expireDate);
                     return { id: user.id, expireDate: result.expireDate, status: result.status }; // Retornar el ID y la fecha de expiración
                 })
             ).then((results) => {
@@ -107,22 +115,32 @@ export default function UserTable() {
             lastname: user.lastname,
             age: user.age,
             gmail: user.gmail,
-            startPlan: user.startPlan,
-            statusPlan: user.statusPlan,
-            subscriptionPlan: user.subscriptionPlan,
-            createdAt: user.createdAt,
-            price: user.price,
         })
         setIsEditDialogOpen(true)
     }
 
     // Guardar cambios de edición
-    const handleSaveEdit = () => {
-        if (!currentUser) return
-        const updatedUsers = users.map((user) => (user.id === currentUser.id ? { ...user, ...editForm } : user))
-        setUsers(updatedUsers)
-        setIsEditDialogOpen(false)
-        setCurrentUser(null)
+    const handleSaveEdit = async () => {
+        if (!currentUser || !editForm) {
+            toast.error("Error", { description: "No hay datos de usuario para guardar." });
+            return;
+        }
+        try {
+            const updateUserDb = await updateUserAction(currentUser.id, editForm);
+            const updatedUsers = users.map((user) =>
+                user.id === currentUser.id ? { ...user, ...updateUserDb } : user
+            );
+            setUsers(updatedUsers);
+
+            toast.success("Usuario actualizado", { description: "Los datos del usuario se han guardado correctamente." });
+        } catch (error) {
+            throw new Error("Error encontrado : -> " + error)
+        } finally {
+            // 4. Cerrar el diálogo y limpiar estados
+            setIsEditDialogOpen(false);
+            setCurrentUser(null);
+        }
+
     }
 
     // Eliminar usuario
@@ -172,11 +190,11 @@ export default function UserTable() {
                             <TableHead>Estado(Membresia)</TableHead>
                             <TableHead>Plan(Nombre)</TableHead>
                             <TableHead>Plan(Precio)</TableHead>
-                            <TableHead className="text-right">Acciones</TableHead>
+                            {/* <TableHead>Codigo QR</TableHead> */}
+                            <TableHead className="text-center">Acciones</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-
                         {users.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={11} className="text-center py-6 text-muted-foreground">
@@ -185,7 +203,6 @@ export default function UserTable() {
                             </TableRow>
                         ) : (
                             users.map((user) => (
-
                                 <TableRow key={user.id} className={selectedRows.includes(user.id) ? "bg-muted/50" : ""}>
                                     <TableCell>
                                         <Checkbox
@@ -206,9 +223,9 @@ export default function UserTable() {
                                     <TableCell>
                                         {userStatusMap[user.id] ? (
                                             <span
-                                                className={`px-2 py-1 rounded-full text-xs ${userStatusMap[user.id] === "Activo" ? "bg-green-100 text-green-800" :
+                                                className={`px-2 py-1 rounded-full text-xs ${userStatusMap[user.id] === "Activo" ? "bg-green-100 text-green-800 " :
                                                     userStatusMap[user.id] === "Inactivo" ? "bg-red-100 text-red-800" :
-                                                        "bg-gray-100 text-gray-800" // Estilo por defecto o para otros estados
+                                                        "bg-gray-100 text-gray-800" // Estilo por defecto 
                                                     }`}
                                             >
                                                 {userStatusMap[user.id]}
@@ -221,8 +238,15 @@ export default function UserTable() {
                                     </TableCell>
                                     <TableCell>{user.subscriptionPlan}</TableCell>
                                     <TableCell>{user.price ? `$${user.price}` : "N/A"}</TableCell>
+                                    {/* Aqui genero el codigo qr para poder scanear al usuario */}
+
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
+                                            {/* Aqui mostrar informacion mas detallada del usuario */}
+                                            <Button variant="ghost" size="icon" onClick={() => handleViewDetails(user)}>
+                                                <EyeIcon className="h-4 w-4" />
+                                                <span className="sr-only">Ver</span>
+                                            </Button>
                                             <Button variant="ghost" size="icon" onClick={() => handleEdit(user)}>
                                                 <Edit className="h-4 w-4" />
                                                 <span className="sr-only">Editar</span>
@@ -231,6 +255,7 @@ export default function UserTable() {
                                                 <Trash2 className="h-4 w-4" />
                                                 <span className="sr-only">Eliminar</span>
                                             </Button>
+
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -244,7 +269,7 @@ export default function UserTable() {
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                 <DialogContent className="max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Editar membresia</DialogTitle>
+                        <DialogTitle>Editar datos de usuario</DialogTitle>
                     </DialogHeader>
                     <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto">
                         <div className="grid grid-cols-2 gap-4">
@@ -278,7 +303,7 @@ export default function UserTable() {
                                 <Label htmlFor="age">Edad</Label>
                                 <Input
                                     id="age"
-                                    type="text"
+                                    type="number"
                                     value={editForm.age}
                                     onChange={(e) => setEditForm({ ...editForm, age: String(e.target.value) })}
                                 />
@@ -302,6 +327,94 @@ export default function UserTable() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Nuevo Diálogo para Ver Detalles del Usuario */}
+            {viewingUser && (
+                <Dialog open={isViewDetailsDialogOpen} onOpenChange={setIsViewDetailsDialogOpen}>
+                    <DialogContent className="max-w-md">
+                        <DialogHeader>
+                            <DialogTitle>Detalles de usuario</DialogTitle>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto text-sm">
+                            <div className="grid grid-cols-[120px_1fr] items-center gap-2">
+                                <span className="font-semibold text-muted-foreground">Nombre:</span>
+                                <span>{viewingUser.name}</span>
+                            </div>
+                            <div className="grid grid-cols-[120px_1fr] items-center gap-2">
+                                <span className="font-semibold text-muted-foreground">Apellido:</span>
+                                <span>{viewingUser.lastname}</span>
+                            </div>
+                            <div className="grid grid-cols-[120px_1fr] items-center gap-2">
+                                <span className="font-semibold text-muted-foreground">Teléfono:</span>
+                                <span>{viewingUser.phone}</span>
+                            </div>
+                            <div className="grid grid-cols-[120px_1fr] items-center gap-2">
+                                <span className="font-semibold text-muted-foreground">Edad:</span>
+                                <span>{viewingUser.age}</span>
+                            </div>
+                            <div className="grid grid-cols-[120px_1fr] items-center gap-2">
+                                <span className="font-semibold text-muted-foreground">Email:</span>
+                                <span>{viewingUser.gmail}</span>
+                            </div>
+                            <div className="grid grid-cols-[120px_1fr] items-center gap-2">
+                                <span className="font-semibold text-muted-foreground">Inicio Plan:</span>
+                                <span>{new Date(viewingUser.startPlan).toLocaleDateString()}</span>
+                            </div>
+                            <div className="grid grid-cols-[120px_1fr] items-center gap-2">
+                                <span className="font-semibold text-muted-foreground">Vencimiento Plan:</span>
+                                <span>{expireSubscription[viewingUser.id] || "N/D"}</span>
+                            </div>
+                            <div className="grid grid-cols-[120px_1fr] items-center gap-2">
+                                <span className="font-semibold text-muted-foreground">Estado Membresía:</span>
+                                {userStatusMap[viewingUser.id] ? (
+                                    <span
+                                        className={`px-2 py-1 rounded-full text-xs ${userStatusMap[viewingUser.id] === "Activo" ? "bg-green-100 text-green-800" :
+                                            userStatusMap[viewingUser.id] === "Inactivo" ? "bg-red-100 text-red-800" :
+                                                "bg-gray-100 text-gray-800"
+                                            }`}
+                                    >
+                                        {userStatusMap[viewingUser.id]}
+                                    </span>
+                                ) : (
+                                    <span>Calculando...</span>
+                                )}
+                            </div>
+                            <div className="grid grid-cols-[120px_1fr] items-center gap-2">
+                                <span className="font-semibold text-muted-foreground">Plan (Nombre):</span>
+                                <span>{viewingUser.subscriptionPlan}</span>
+                            </div>
+                            <div className="grid grid-cols-[120px_1fr] items-center gap-2">
+                                <span className="font-semibold text-muted-foreground">Plan (Precio):</span>
+                                <span>{viewingUser.price ? `$${viewingUser.price}` : "N/A"}</span>
+                            </div>
+                            <div className="grid grid-cols-[120px_1fr] items-center gap-2">
+                                <span className="font-semibold text-muted-foreground">Registrado el:</span>
+                                <span>{new Date(viewingUser.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <div className="grid grid-cols-[120px_1fr] items-center gap-2">
+                                <span className="font-semibold text-muted-foreground">Qr de cliente:</span>
+                                <span> <Canvas
+                                    text={viewingUser.id} // Aqui tengo que verificar por el id que tengo y en base a eso poder buscar al usuario
+                                    options={{
+                                        errorCorrectionLevel: 'M',
+                                        margin: 2,
+                                        width: 100,
+                                        color: {
+                                            dark: '#000000',
+                                        },
+                                    }}
+                                /></span>
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button onClick={() => setIsViewDetailsDialogOpen(false)}>
+                                Cerrar
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            )}
+
         </div>
     )
 }

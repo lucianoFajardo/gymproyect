@@ -1,5 +1,6 @@
 "use client"
 
+// TODO: Aqui esta el apartado de las rutas del sidebar
 import * as React from "react"
 import {
   AudioWaveform,
@@ -54,19 +55,16 @@ const data = {
       isActive: true,
       items: [
         {
-          title: "crear usuario",
+          title: "Crear usuario",
           url: "/dashboard/create-user",
         },
         {
-          title: "ver usuarios",
+          title: "Ver usuarios",
           url: "/dashboard/view-users",
         },
         {
-          title: "registrar asistencia",
-          url: "#",
-        },
-        {
-          title: "Reportes",
+          //* Aqui tendria que tener algun apartado para poder crear un reporte en formato pdf o excel.
+          title: "Generar reporte usuarios",
           url: "#",
         },
       ],

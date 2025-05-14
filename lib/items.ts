@@ -1,5 +1,6 @@
 import { Calendar, Home, Inbox, Search, Settings } from "lucide-react"
 
+//* Aqui estan todas las rutas de mi proyecto que se pueden usar en el sidebar
 export const items = [
     {
         title: "Home",
