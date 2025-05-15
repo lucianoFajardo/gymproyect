@@ -1,21 +1,6 @@
 "use client"
 
-import { Toaster } from "sonner";
-
-export function RootLayout({
-    children,
-}: Readonly<{
-    children: React.ReactNode;
-}>) {
-    return (
-        <html lang="en">
-            <body>
-                {children}
-                <Toaster />
-            </body>
-        </html>
-    );
-} import { AppSidebar } from "@/components/ui/app-sidebar"
+import { AppSidebar } from "@/components/ui/app-sidebar"
 import {
     SidebarInset,
     SidebarProvider,
@@ -23,10 +8,9 @@ import {
 } from "@/components/ui/sidebar"
 import { Separator } from "@radix-ui/react-separator";
 import { SessionProvider } from "next-auth/react";
-
+import { Toaster } from "sonner";
 
 export default function DashboardPage({ children }: { children: React.ReactNode }) {
-
     return (
         <SessionProvider>
             <SidebarProvider>
@@ -34,6 +18,7 @@ export default function DashboardPage({ children }: { children: React.ReactNode 
                 <SidebarInset>
                     <SidebarTrigger />
                     <Separator orientation="vertical" className="mr-2 h-4" />
+                    <Toaster richColors theme="light" />
                     {children}
                 </SidebarInset>
             </SidebarProvider>

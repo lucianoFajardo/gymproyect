@@ -14,6 +14,9 @@ import checkSubscriptionExpiration from "@/actions/expiration-subscription-actio
 import { useQRCode } from 'next-qrcode';
 import { toast } from "sonner"
 import { updateUserAction } from "@/actions/update-data-user-action"
+import { UpdateClientSchema } from "@/lib/zod"
+import { z } from "zod"
+
 
 //TODO : Seguir aqui despues tengo que pulir unas cuantas cosas mas y estariamos listos , recordar que downgraidie el reactDom y react 
 export default function UserTable() {
@@ -25,6 +28,7 @@ export default function UserTable() {
             setUsers(data)
         });
     }, []);
+
     const { Canvas } = useQRCode();
     // UseState para almacenar los datos y actualizar los estados
     const [users, setUsers] = useState<UserModel[]>([])
@@ -113,26 +117,41 @@ export default function UserTable() {
             name: user.name,
             phone: user.phone,
             lastname: user.lastname,
-            age: user.age,
+            age: user.age.toString(),
             gmail: user.gmail,
         })
         setIsEditDialogOpen(true)
     }
 
     // Guardar cambios de edición
-    const handleSaveEdit = async () => {
+    const handleSaveEdit = async (editForm: z.infer<typeof UpdateClientSchema>) => {
         if (!currentUser || !editForm) {
-            toast.error("Error", { description: "No hay datos de usuario para guardar." });
+            toast.error("Error", { description: "No hay datos de usuario para Modificar." });
             return;
         }
         try {
-            const updateUserDb = await updateUserAction(currentUser.id, editForm);
-            const updatedUsers = users.map((user) =>
-                user.id === currentUser.id ? { ...user, ...updateUserDb } : user
-            );
-            setUsers(updatedUsers);
-
-            toast.success("Usuario actualizado", { description: "Los datos del usuario se han guardado correctamente." });
+            const updateUserDb = await updateUserAction(currentUser.id, editForm); //funcion de actualizar los datos
+            if (updateUserDb.success) {
+                const updatedUsers = users.map((user) =>
+                    user.id === currentUser.id ? { ...user, ...updateUserDb } : user
+                );
+                setUsers(updatedUsers);
+                setIsEditDialogOpen(false);
+                setCurrentUser(null);
+                toast.success("Usuario actualizado", {
+                    description:"Datos de usuarios actualizados con exito",
+                    duration: 5000,
+                })
+            } else {
+                if (updateUserDb.error) {
+                    console.log("Error de validación:", updateUserDb.error);
+                }
+                toast.error("Error al actualizar datos", {
+                    description: "Por favor, corrige los datos y vuelve a intentarlo , el formulario presenta errores.",
+                    duration: 5000,
+                });
+                // NO cerrar el diálogo aquí, para que el usuario vea los errores
+            }
         } catch (error) {
             throw new Error("Error encontrado : -> " + error)
         } finally {
@@ -255,7 +274,6 @@ export default function UserTable() {
                                                 <Trash2 className="h-4 w-4" />
                                                 <span className="sr-only">Eliminar</span>
                                             </Button>
-
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -271,60 +289,83 @@ export default function UserTable() {
                     <DialogHeader>
                         <DialogTitle>Editar datos de usuario</DialogTitle>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="name">Nombre</Label>
-                                <Input
-                                    id="name"
-                                    value={editForm.name}
-                                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                                />
+                    {/* Envolver el contenido en un <form> */}
+                    <form onSubmit={(e) => {
+                        e.preventDefault(); // Prevenir el envío por defecto del navegador
+                        handleSaveEdit({ ...editForm, age: Number(editForm.age) });   // Llamar a tu función de guardado que incluye validación Zod
+                    }}>
+                        <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="name">Nombre</Label>
+                                    <Input
+                                        id="name"
+                                        name="name" // Añadir name para accesibilidad y potencial uso con FormData
+                                        value={editForm.name}
+                                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                                    // required // Puedes añadir validación nativa si lo deseas
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="lastname">Apellido</Label>
+                                    <Input
+                                        id="lastname"
+                                        name="lastname"
+                                        value={editForm.lastname}
+                                        onChange={(e) => setEditForm({ ...editForm, lastname: e.target.value })}
+                                    // required
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="phone">Teléfono</Label>
+                                    <Input
+                                        id="phone"
+                                        name="phone"
+                                        value={editForm.phone}
+                                        onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                                    // required
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="age">Edad</Label>
+                                    <Input
+                                        id="age"
+                                        name="age"
+                                        value={editForm.age} // Mantener como string aquí si editForm.age es string
+                                        onChange={(e) => setEditForm({ ...editForm, age: e.target.value })} // Guardar como string
+                                    // min="0" // Validación nativa para edad no negativa
+                                    // required
+                                    />
+                                </div>
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="lastname">Apellido</Label>
+                                <Label htmlFor="gmail">Email</Label>
                                 <Input
-                                    id="lastname"
-                                    value={editForm.lastname}
-                                    onChange={(e) => setEditForm({ ...editForm, lastname: e.target.value })}
+                                    id="gmail"
+                                    name="gmail"
+                                    type="email"
+                                    value={editForm.gmail}
+                                    onChange={(e) => setEditForm({ ...editForm, gmail: e.target.value })}
+                                // required
                                 />
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="phone">Teléfono</Label>
-                                <Input
-                                    id="phone"
-                                    value={editForm.phone}
-                                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                                />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="age">Edad</Label>
-                                <Input
-                                    id="age"
-                                    type="number"
-                                    value={editForm.age}
-                                    onChange={(e) => setEditForm({ ...editForm, age: String(e.target.value) })}
-                                />
-                            </div>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="gmail">Email</Label>
-                            <Input
-                                id="gmail"
-                                type="email"
-                                value={editForm.gmail}
-                                onChange={(e) => setEditForm({ ...editForm, gmail: e.target.value })}
-                            />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                            Cancelar
-                        </Button>
-                        <Button onClick={handleSaveEdit}>Guardar cambios</Button>
-                    </DialogFooter>
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    setIsEditDialogOpen(false); // Permitir siempre cerrar con Cancelar
+                                    setCurrentUser(null);     // Limpiar usuario actual
+                                }}
+                            >
+                                Cancelar
+                            </Button>
+                            <Button type="submit">Guardar cambios</Button>
+                        </DialogFooter>
+                    </form>
                 </DialogContent>
             </Dialog>
 
@@ -414,7 +455,6 @@ export default function UserTable() {
                     </DialogContent>
                 </Dialog>
             )}
-
         </div>
     )
 }
