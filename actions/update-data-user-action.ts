@@ -38,7 +38,7 @@ export const updateUserAction = async (userId: string, dataFormClient: updateUse
             };  //Retornamos la respuesta que nos da la base de datos
         }
     } catch (error) {
-        console.log("Error encontrado : -> " + error)
+        console.log("Error encontrado al editar usuario: -> " + error)
         return {
             // Si aqui el servidor no responde o hay un error me retorna este JSON con un error
             success: false,

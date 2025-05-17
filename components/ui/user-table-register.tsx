@@ -16,7 +16,7 @@ import { toast } from "sonner"
 import { updateUserAction } from "@/actions/update-data-user-action"
 import { UpdateClientSchema } from "@/lib/zod"
 import { z } from "zod"
-
+import { deleteDataUserAction } from "@/actions/delete-data-user-action"
 
 //TODO : Seguir aqui despues tengo que pulir unas cuantas cosas mas y estariamos listos , recordar que downgraidie el reactDom y react 
 export default function UserTable() {
@@ -139,9 +139,13 @@ export default function UserTable() {
                 setIsEditDialogOpen(false);
                 setCurrentUser(null);
                 toast.success("Usuario actualizado", {
-                    description:"Datos de usuarios actualizados con exito",
+                    description: "Datos de usuarios actualizados con exito",
                     duration: 5000,
                 })
+                getDataUserAction().then((data) => {
+                    setUsers(data); // Esto actualizará el estado 'users'
+                    // y, a su vez, disparará el useEffect que calcula las expiraciones
+                });
             } else {
                 if (updateUserDb.error) {
                     console.log("Error de validación:", updateUserDb.error);
@@ -163,9 +167,29 @@ export default function UserTable() {
     }
 
     // Eliminar usuario
-    const handleDelete = (id: string) => {
-        setUsers(users.filter((user) => user.id !== id))
-        setSelectedRows(selectedRows.filter((rowId) => rowId !== id))
+    const handleDelete = async (id: string) => {
+        try {
+            setUsers(users.filter((user) => user.id !== id))
+            setSelectedRows(selectedRows.filter((rowId) => rowId !== id))
+            const res = await deleteDataUserAction(id);
+            if (res.success) {
+                toast.success("Usuario eliminado", {
+                    description: "Usuario eliminado correctamente",
+                    duration: 5000,
+                })
+            } else {
+                toast.error("Error al eliminar usuario", {
+                    description: "No se pudo eliminar el usuario, por favor intente nuevamente.",
+                    duration: 5000,
+                })
+            }
+        } catch (error) {
+            console.error("Error al eliminar el usuario:", error);
+            toast.error("Error al eliminar usuario", {
+                description: "No se pudo eliminar el usuario, por favor intente nuevamente.",
+                duration: 5000,
+            })
+        }
     }
 
     // Eliminar usuarios seleccionados
@@ -270,6 +294,7 @@ export default function UserTable() {
                                                 <Edit className="h-4 w-4" />
                                                 <span className="sr-only">Editar</span>
                                             </Button>
+                                            {/* Agregar antes de eliminar un boton de confirmacion */}
                                             <Button variant="ghost" size="icon" onClick={() => handleDelete(user.id)}>
                                                 <Trash2 className="h-4 w-4" />
                                                 <span className="sr-only">Eliminar</span>
@@ -333,6 +358,7 @@ export default function UserTable() {
                                     <Input
                                         id="age"
                                         name="age"
+                                        type="number"
                                         value={editForm.age} // Mantener como string aquí si editForm.age es string
                                         onChange={(e) => setEditForm({ ...editForm, age: e.target.value })} // Guardar como string
                                     // min="0" // Validación nativa para edad no negativa
