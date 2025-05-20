@@ -14,7 +14,7 @@ export default function DashboardPage({ children }: { children: React.ReactNode 
     return (
         <SessionProvider>
             <SidebarProvider>
-                <AppSidebar />
+                <AppSidebar />  {/* Aqui estan las rutas de mi pagina */}
                 <SidebarInset>
                     <SidebarTrigger />
                     <Separator orientation="vertical" className="mr-2 h-4" />

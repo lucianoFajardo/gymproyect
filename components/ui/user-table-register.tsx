@@ -16,6 +16,17 @@ import { toast } from "sonner"
 import { updateUserAction } from "@/actions/update-data-user-action"
 import { UpdateClientSchema } from "@/lib/zod"
 import { z } from "zod"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog" // Asegúrate que la ruta sea correcta
 import { deleteDataUserAction } from "@/actions/delete-data-user-action"
 
 //TODO : Seguir aqui despues tengo que pulir unas cuantas cosas mas y estariamos listos , recordar que downgraidie el reactDom y react 
@@ -32,6 +43,10 @@ export default function UserTable() {
     const { Canvas } = useQRCode();
     // UseState para almacenar los datos y actualizar los estados
     const [users, setUsers] = useState<UserModel[]>([])
+
+    // Estado para el diálogo de eliminación
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [userToDeleteId, setUserToDeleteId] = useState<string | null>(null);
 
     const [expireSubscription, setExpireSubscription] = useState<Record<string, string>>({});
     const [userStatusMap, setUserStatusMap] = useState<Record<string, string>>({});
@@ -198,7 +213,7 @@ export default function UserTable() {
         setSelectedRows([])
     }
 
-    // Reemplazar la estructura de la tabla con los nuevos campos
+    //
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-center m-4 p-2">
@@ -282,7 +297,6 @@ export default function UserTable() {
                                     <TableCell>{user.subscriptionPlan}</TableCell>
                                     <TableCell>{user.price ? `$${user.price}` : "N/A"}</TableCell>
                                     {/* Aqui genero el codigo qr para poder scanear al usuario */}
-
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
                                             {/* Aqui mostrar informacion mas detallada del usuario */}
@@ -294,13 +308,56 @@ export default function UserTable() {
                                                 <Edit className="h-4 w-4" />
                                                 <span className="sr-only">Editar</span>
                                             </Button>
-                                            {/* Agregar antes de eliminar un boton de confirmacion */}
-                                            <Button variant="ghost" size="icon" onClick={() => handleDelete(user.id)}>
-                                                <Trash2 className="h-4 w-4" />
-                                                <span className="sr-only">Eliminar</span>
-                                            </Button>
+
+                                            <AlertDialog open={isDeleteDialogOpen && userToDeleteId === user.id} onOpenChange={(open) => {
+                                                if (!open) {
+                                                    setIsDeleteDialogOpen(false);
+                                                    setUserToDeleteId(null); // Limpiar al cerrar
+                                                }
+                                            }}>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => {
+                                                            setUserToDeleteId(user.id);
+                                                            setIsDeleteDialogOpen(true);
+                                                        }}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                        <span className="sr-only">Eliminar</span>
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            Esta acción no se puede deshacer. Esto eliminará permanentemente
+                                                            al usuario y sus datos de nuestros servidores, perdiendo toda informacion asociada.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel onClick={() => {
+                                                            setIsDeleteDialogOpen(false);
+                                                            setUserToDeleteId(null);
+                                                        }}>
+                                                            Cancelar
+                                                        </AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => {
+                                                            if (userToDeleteId) {
+                                                                handleDelete(userToDeleteId); // Llama a tu función de eliminar
+                                                            }
+                                                            setIsDeleteDialogOpen(false); // Cierra el diálogo después de la acción
+                                                            setUserToDeleteId(null);
+                                                        }}>
+                                                            Sí, eliminar usuario.
+                                                        </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
                                         </div>
                                     </TableCell>
+
                                 </TableRow>
                             ))
                         )}

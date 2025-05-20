@@ -3,13 +3,15 @@
 // TODO: Aqui esta el apartado de las rutas del sidebar
 import * as React from "react"
 import {
-  AudioWaveform,
-  BookOpen,
-  Bot,
-  Command,
+  CalendarCogIcon,
   GalleryVerticalEnd,
-  Settings2,
   User,
+  ScanQrCodeIcon,
+  LucideShoppingBasket,
+  ContactRoundIcon,
+  Rabbit,
+  HandCoins,
+  SquareActivity,
 } from "lucide-react"
 
 import { NavMain } from "@/components/ui/nav-main"
@@ -32,22 +34,31 @@ const data = {
   },
   teams: [
     {
-      name: "Acme Inc",
+      name: "DashboardGyms",
       logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
+      plan: "Administrador de gimnasios",
     },
   ],
   navMain: [
+    {
+      title: "Menu rapido",
+      url: "#",
+      icon: Rabbit,
+      items: [
+        {
+          title: "Crear venta",
+          url: "/dashboard/manage-plans",
+        },
+        {
+          title: "Registrar asistencia",
+          url: "/dashboard/manage-subscriptions",
+        },
+        {
+          title: "Activar subscripcion",
+          url: "#",
+        },
+      ],
+    },
     {
       title: "Usuario",
       url: "#",
@@ -59,7 +70,7 @@ const data = {
           url: "/dashboard/create-user",
         },
         {
-          title: "Ver usuarios",
+          title: "Gestionar usuarios",
           url: "/dashboard/view-users",
         },
         {
@@ -70,66 +81,135 @@ const data = {
       ],
     },
     {
-      title: "Models",
+      title: "Planes y subscripciones",
       url: "#",
-      icon: Bot,
+      icon: CalendarCogIcon,
       items: [
         {
-          title: "Genesis",
-          url: "#",
+          title: "Crear planes",
+          url: "/dashboard/manage-plans",
         },
         {
-          title: "Explorer",
-          url: "#",
+          title: "Gestionar planes",
+          url: "/dashboard/manage-plans",
         },
         {
-          title: "Quantum",
+          title: "Gestionar subscripciones", //Aqui se tiene que poder actualizar las subscripciones de los usuarios para que puedan ingresar o no al gym
+          url: "/dashboard/manage-subscriptions",
+        },
+        {
+          title: "Generar reportes",
           url: "#",
         },
       ],
     },
     {
-      title: "Documentation",
+      title: "Asistencias y reportes",
       url: "#",
-      icon: BookOpen,
+      icon: ScanQrCodeIcon,
       items: [
         {
-          title: "Introduction",
-          url: "#",
+          title: "Ingresar asistencias", // Aqui se tendria que agregar un apartado para poder escanear el qr de los usuarios.
+          url: "/dashboard/manage-plans",
         },
         {
-          title: "Get Started",
-          url: "#",
+          title: "Gestionar asistencias",
+          url: "/dashboard/manage-subscriptions",
         },
         {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
+          title: "Generar reportes",
           url: "#",
         },
       ],
     },
     {
-      title: "Settings",
+      title: "Productos y servicios",
       url: "#",
-      icon: Settings2,
+      icon: LucideShoppingBasket,
       items: [
         {
-          title: "General",
+          title: "Crear productos",
+          url: "/dashboard/manage-plans",
+        },
+        {
+          title: "Crear servicios",
+          url: "/dashboard/manage-plans",
+        },
+        {
+          title: "Gestionar servicios",
+          url: "/dashboard/manage-plans",
+        },
+        {
+          title: "Gestionar productos",
+          url: "/dashboard/manage-subscriptions",
+        },
+        {
+          title: "Generar reportes",
+          url: "#",
+        },
+      ],
+    },
+    {
+      title: "Trabajadores",
+      url: "#",
+      icon: ContactRoundIcon,
+      items: [
+        {
+          title: "Agregar ficha trabajador",
+          url: "/dashboard/manage-plans",
+        },
+        {
+          title: "Gestionar trabajadores",
+          url: "/dashboard/manage-subscriptions",
+        },
+        {
+          title: "Generar reportes",
+          url: "#",
+        },
+      ],
+    },
+    {
+      title: "Ventas y Cierre de caja",
+      url: "#",
+      icon: HandCoins,
+      items: [
+        {
+          title: "Crear venta",
+          url: "/dashboard/manage-plans",
+        },
+        {
+          title: "Gestionar ventas",
+          url: "/dashboard/manage-subscriptions",
+        },
+        {
+          title: "Generar cierre de caja",
           url: "#",
         },
         {
-          title: "Team",
+          title: "Generar reporte",
+          url: "#",
+        },
+      ],
+    },
+    {
+      title: "Gestion del gimnasio",
+      url: "#",
+      icon: SquareActivity,
+      items: [
+        {
+          title: "Ingresos y Egresos",
+          url: "/dashboard/manage-plans",
+        },
+        {
+          title: "Sueldos y pagos",
+          url: "/dashboard/manage-subscriptions",
+        },
+        {
+          title: "Gastos mensuales",
           url: "#",
         },
         {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
+          title: "Deudores",
           url: "#",
         },
       ],
