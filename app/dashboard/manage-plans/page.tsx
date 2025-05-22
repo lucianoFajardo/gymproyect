@@ -2,6 +2,6 @@ import React from 'react'
 
 export default function ManagePlans() {
   return (
-    <div>ManagePlans</div>
+    <div>Manejar los tipos de planes </div>
   )
 }
