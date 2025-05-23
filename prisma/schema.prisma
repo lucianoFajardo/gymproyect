@@ -13,18 +13,18 @@ enum Role {
 }
 
 model User {
-  id            String              @id @default(cuid())
+  id            String          @id @default(cuid())
   name          String?
-  email         String              @unique
+  email         String          @unique
   password      String?
   emailVerified DateTime?
   image         String?
-  role          Role                @default(user)
+  role          Role            @default(user)
   accounts      Account[]
   // Optional for WebAuthn support
   Authenticator Authenticator[]
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 }
 
 model Account {
@@ -75,25 +75,27 @@ model Authenticator {
 model SubscriptionPlan {
   id                 String              @id @default(cuid())
   price              Int
-  namePrice          String
-  subscriptionPlanId String
+  namePlan           String              @default("Plan estandar")
+  durationDaysPlan   Int                 @default(30)
+  descriptionPlan    String?
+  subscriptionPlanId String          
   clients            CreateClientModel[]
 }
 
 model CreateClientModel {
-  id                 String           @id @default(cuid())
+  id                 String            @id @default(cuid())
   name               String
   lastname           String
   phone              String
   age                String
   gmail              String
-  startPlan          DateTime         @default(now())
+  startPlan          DateTime          @default(now())
   statusPlan         String
-  subscriptionPlanId String?          // Permitir valores nulos
+  subscriptionPlanId String? // Permitir valores nulos
   subscriptionPlan   SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id]) // Relación opcional
   methodpay          String
-  createDateAt       DateTime         @default(now())
-  updateDateAt       DateTime         @updatedAt
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
+  createDateAt       DateTime          @default(now())
+  updateDateAt       DateTime          @updatedAt
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
 }

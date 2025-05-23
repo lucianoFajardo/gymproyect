@@ -31,26 +31,30 @@ import { deleteDataUserAction } from "@/actions/delete-data-user-action"
 
 //TODO : Seguir aqui despues tengo que pulir unas cuantas cosas mas y estariamos listos , recordar que downgraidie el reactDom y react 
 export default function UserTable() {
+    const [users, setUsers] = useState<UserModel[]>([])
+    const [expireSubscription, setExpireSubscription] = useState<Record<string, string>>({});
+    const [userStatusMap, setUserStatusMap] = useState<Record<string, string>>({});
 
     // Obtener los datos de los usuarios al cargar el componente
     useEffect(() => {
         getDataUserAction().then((data) => {
-            console.log("Data fetched:", data)
+            if (!data || data.length === 0) {
+                toast.error("Error", { description: "No se encontraron usuarios en la base de datos." });
+                return;
+            }
             setUsers(data)
         });
     }, []);
 
     const { Canvas } = useQRCode();
     // UseState para almacenar los datos y actualizar los estados
-    const [users, setUsers] = useState<UserModel[]>([])
+
 
     // Estado para el diálogo de eliminación
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [userToDeleteId, setUserToDeleteId] = useState<string | null>(null);
 
-    const [expireSubscription, setExpireSubscription] = useState<Record<string, string>>({});
-    const [userStatusMap, setUserStatusMap] = useState<Record<string, string>>({});
-    // Estado para selección de filas
+
     const [selectedRows, setSelectedRows] = useState<string[]>([])
     // Estados para edición
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -81,7 +85,9 @@ export default function UserTable() {
             // Procesar todas las fechas de inicio de los planes
             Promise.all(
                 users.map(async (user) => {
-                    const result = await checkSubscriptionExpiration(user.id, user.startPlan, 10); // aqui guardo el result de la fn
+                    const endPlanDay = user.subscriptionPlan?.durationDaysPlan || 0;  //obtengo la duracion del plan y sino me retorna 0
+                    console.log("Duracion del plan: ", endPlanDay);
+                    const result = await checkSubscriptionExpiration(user.id, user.startPlan, endPlanDay); // aqui guardo el result de la fn
                     return { id: user.id, expireDate: result.expireDate, status: result.status }; // Retornar el ID y la fecha de expiración
                 })
             ).then((results) => {
@@ -207,24 +213,12 @@ export default function UserTable() {
         }
     }
 
-    // Eliminar usuarios seleccionados
-    const handleDeleteSelected = () => {
-        setUsers(users.filter((user) => !selectedRows.includes(user.id)))
-        setSelectedRows([])
-    }
 
     //
     return (
-        <div className="space-y-4">
+        <div  className="rounded-md border overflow-x-auto m-4">
             <div className="flex justify-between items-center m-4 p-2">
                 <h1 className="text-2xl font-bold"> Gestión de Miembros</h1>
-                <div className="space-x-2">
-                    {selectedRows.length > 0 && (
-                        <Button variant="destructive" onClick={handleDeleteSelected} size="sm">
-                            Eliminar seleccionados ({selectedRows.length})
-                        </Button>
-                    )}
-                </div>
             </div>
 
             <div className="rounded-md border overflow-x-auto m-4">
@@ -294,7 +288,7 @@ export default function UserTable() {
                                             </span>
                                         )}
                                     </TableCell>
-                                    <TableCell>{user.subscriptionPlan}</TableCell>
+                                    <TableCell>{user.subscriptionPlan?.name ?? "N/A"}</TableCell>
                                     <TableCell>{user.price ? `$${user.price}` : "N/A"}</TableCell>
                                     {/* Aqui genero el codigo qr para poder scanear al usuario */}
                                     <TableCell className="text-right">
@@ -505,7 +499,7 @@ export default function UserTable() {
                             </div>
                             <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                                 <span className="font-semibold text-muted-foreground">Plan (Nombre):</span>
-                                <span>{viewingUser.subscriptionPlan}</span>
+                                <span>{viewingUser.subscriptionPlan ? "si encontre algo" : ""}</span>
                             </div>
                             <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                                 <span className="font-semibold text-muted-foreground">Plan (Precio):</span>

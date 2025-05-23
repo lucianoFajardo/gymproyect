@@ -91,7 +91,7 @@ const data = {
         },
         {
           title: "Gestionar planes",
-          url: "/dashboard/manage-plans",
+          url: "/dashboard/manage-plans/rud-plans",
         },
         {
           title: "Gestionar subscripciones", //Aqui se tiene que poder actualizar las subscripciones de los usuarios para que puedan ingresar o no al gym

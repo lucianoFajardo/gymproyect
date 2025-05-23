@@ -1,9 +1,8 @@
+import CreatePlansForm from '@/components/ui/create-plans-form'
 import React from 'react'
 
 export default function ManagePlans() {
   return (
-    <div>
-      Para crear los planes que el gym tendra disponibes
-    </div>
+    <CreatePlansForm />
   )
 }

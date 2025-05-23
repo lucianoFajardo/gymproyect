@@ -1,10 +1,12 @@
 'use server'
 import { db } from "@/lib/db";
+import { SubscriptionPlanModel } from "@/Model/Subscription-Plan-model";
+import { UserModel } from "@/Model/User-model"; // Importa ambas interfaces
 
-export const getDataUserAction = async () => {   
+export async function getDataUserAction(): Promise<UserModel[]> {
     try {
-        const users = await db.createClientModel.findMany({
-            select:{
+        const usersFromDb = await db.createClientModel.findMany({
+            select: {
                 id: true,
                 name: true,
                 age: true,
@@ -13,38 +15,57 @@ export const getDataUserAction = async () => {
                 gmail: true,
                 startPlan: true,
                 statusPlan: true,
-                subscriptionPlan:{
-                    select:{
-                        namePrice: true,
+                subscriptionPlan: { // Esto ya selecciona los campos que necesitas del plan
+                    select: {
+                        // id: true, // Descomenta si necesitas el ID del plan en el frontend
+                        namePlan: true,
+                        durationDaysPlan: true,
                         price: true,
                     }
                 },
                 createdAt: true,
             }
-        })
-        // Parse data to JSON with string values
-        const parsedUsers = users.map(user => ({
-            id: String(user.id),
-            name: String(user.name),
-            lastname: String(user.lastname),
-            age: user.age ? String(user.age) : "",
-            phone: user.phone ? String(user.phone) : "",
-            gmail: String(user.gmail),
-            startPlan: user.startPlan ? String(user.startPlan) : "",
-            statusPlan: String(user.statusPlan),
-            subscriptionPlan: user.subscriptionPlan?.namePrice ? String(user.subscriptionPlan.namePrice) : "",
-            price: user.subscriptionPlan?.price ? String(user.subscriptionPlan.price) : "",
-            createdAt: String(user.createdAt),
-        }));
-        //Verificar que existan usuarios registrados.
-        if (!parsedUsers || parsedUsers.length === 0) {
-            throw new Error("No se encontraron usuarios registrados.");
+        });
+
+        // Mapear los datos a la estructura de UserModel
+        const formattedUsers: UserModel[] = usersFromDb.map(user => {
+            // Construir el objeto subscriptionPlan para el UserModel
+            let planInfo: SubscriptionPlanModel | null = null;
+
+            if (user.subscriptionPlan) {
+                planInfo = {
+                    name: user.subscriptionPlan.namePlan,
+                    durationDaysPlan: user.subscriptionPlan.durationDaysPlan, // Mantener como número
+                    price: user.subscriptionPlan.price, // Mantener como número
+                };
+            }
+
+            return {
+                id: String(user.id),
+                name: String(user.name),
+                lastname: String(user.lastname),
+                age: user.age ? String(user.age) : "",
+                phone: user.phone ? String(user.phone) : "",
+                gmail: String(user.gmail),
+                startPlan: user.startPlan ? user.startPlan.toISOString() : "", // Convertir Date a string ISO
+                statusPlan: String(user.statusPlan),
+                price: user.subscriptionPlan ? String(user.subscriptionPlan.price) : "", // Convertir a string
+                createdAt: user.createdAt ? user.createdAt.toISOString() : "", // Convertir Date a string ISO
+                subscriptionPlan: planInfo, // Asignar el objeto del plan (o null)
+            };
+        });
+
+        // No necesitas la verificación de !parsedUsers, findMany devuelve [] si no hay resultados
+        if (formattedUsers.length === 0) {
+            // Puedes decidir si esto es un error o simplemente no hay usuarios.
+            // Por ahora, devolvemos un array vacío, el frontend puede manejarlo.
+            // throw new Error("No se encontraron usuarios registrados.");
+            console.log("No se encontraron usuarios registrados.");
         }
-        return parsedUsers
+
+        return formattedUsers;
     } catch (error) {
-        console.error("Error al obtener los usuarios", error);
-        throw new Error("No se pudo obtener los usuarios");
+        console.error("Error al obtener los usuarios:", error);
+        return [];
     }
 }
-
-//TODO: ya se obtienen los datos , ahora solo queda renderizarlos a gusto y editarlos poder tener un CRUD completo.

@@ -49,7 +49,7 @@ export default function ProfileForm() {
                 // Mapear los planes para el select
                 const mappedPlans = subscriptionPlans.map((plan) => ({
                     value: plan.id,
-                    label: plan.namePrice,
+                    label: plan.namePlan,
                 }));
                 setValuesPlan(mappedPlans);
             } catch (error) {
@@ -87,7 +87,7 @@ export default function ProfileForm() {
             })
             setTimeout(() => {
                 form.reset() // Resetea todos los campos del formulario
-            }, 3000) // 3 segundos para mostr
+            }, 2000) // 3 segundos para mostr
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (_) {
             toast.error("No se puede crear el cliente", {

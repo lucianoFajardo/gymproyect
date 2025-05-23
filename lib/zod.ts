@@ -50,4 +50,9 @@ export const UpdateClientSchema = object({
     gmail: string({ required_error: "Formato de correo electronico invalido" }).email({ message: "Formato de correo electrónico inválido." }),
 })
 
-//subscriptionPlanId: string({required_error:"Formato de pago invalido"}).regex(/^\$\d{1,}\.?\d{0,}$/, { message: "Formato de pago inválido ($ seguido de números)." }),
+export const CreatePlansSchema = object({
+    name: string({ required_error: "Nombre de plan requerido" }).min(2, { message: "El nombre debe tener al menos 2 caracteres." }).regex(/^[a-zA-Z]+(\s[a-zA-Z]+)*$/, { message: "El nombre solo puede contener letras." }),        
+    price: coerce.number({ required_error: "Precio requerido" }).min(1, { message: "El precio debe ser mayor a 0." }),
+    description: string().optional(),
+    durationDaysPlan: coerce.number({ required_error: "Duracion del plan requerido" }).min(1, { message: "La duracion del plan debe ser mayor a 0." }).max(368, { message: "El precio no puede ser mayor a 1 año en dias 368." }),
+})
