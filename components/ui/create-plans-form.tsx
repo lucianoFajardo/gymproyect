@@ -15,20 +15,20 @@ import {
     FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { CreatePlansSchema } from "@/lib/zod"
+import { PlansSchema } from "@/lib/zod"
 import { createSubscriptionPlanAction } from "@/actions/create-subscription-plan-action"
 import { toast } from "sonner"
 
 export default function CreatePlansForm() {
-    const form = useForm<z.infer<typeof CreatePlansSchema>>({
-        resolver: zodResolver(CreatePlansSchema), defaultValues: {
+    const form = useForm<z.infer<typeof PlansSchema>>({
+        resolver: zodResolver(PlansSchema), defaultValues: {
             name: "",
             price: 0,
             description: "",
             durationDaysPlan: 0,
         },
     })
-    const onSubmit = async (value: z.infer<typeof CreatePlansSchema>) => {
+    const onSubmit = async (value: z.infer<typeof PlansSchema>) => {
         try {
             //Aqui va el POST para crear el plan
             const res = await createSubscriptionPlanAction(value);

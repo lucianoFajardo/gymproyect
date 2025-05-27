@@ -50,7 +50,7 @@ export const UpdateClientSchema = object({
     gmail: string({ required_error: "Formato de correo electronico invalido" }).email({ message: "Formato de correo electrónico inválido." }),
 })
 
-export const CreatePlansSchema = object({
+export const PlansSchema = object({
     name: string({ required_error: "Nombre de plan requerido" }).min(2, { message: "El nombre debe tener al menos 2 caracteres." }).regex(/^[a-zA-Z]+(\s[a-zA-Z]+)*$/, { message: "El nombre solo puede contener letras." }),        
     price: coerce.number({ required_error: "Precio requerido" }).min(1, { message: "El precio debe ser mayor a 0." }),
     description: string().optional(),

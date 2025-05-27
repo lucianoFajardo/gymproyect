@@ -1,10 +1,10 @@
 "use server"
 
 import { db } from "@/lib/db";
-import { CreatePlansSchema } from "@/lib/zod";
+import { PlansSchema } from "@/lib/zod";
 import { z } from "zod";
-export const createSubscriptionPlanAction = async (value: z.infer<typeof CreatePlansSchema>) => {
-    const { data, success } = await CreatePlansSchema.safeParse(value);
+export const createSubscriptionPlanAction = async (value: z.infer<typeof PlansSchema>) => {
+    const { data, success } = await PlansSchema.safeParse(value);
     if (!success) {
         return {
             error: true,
@@ -19,7 +19,6 @@ export const createSubscriptionPlanAction = async (value: z.infer<typeof CreateP
                 price: data.price,
                 durationDaysPlan: data.durationDaysPlan,
                 descriptionPlan: data.description? data.description : "",
-                subscriptionPlanId: data.identificationPlan ? data.identificationPlan : "",
             }
         })
         return {

@@ -163,10 +163,7 @@ export default function UserTable() {
                     description: "Datos de usuarios actualizados con exito",
                     duration: 5000,
                 })
-                getDataUserAction().then((data) => {
-                    setUsers(data); // Esto actualizará el estado 'users'
-                    // y, a su vez, disparará el useEffect que calcula las expiraciones
-                });
+                getDataUserAction().then((data) => setUsers(data));
             } else {
                 if (updateUserDb.error) {
                     console.log("Error de validación:", updateUserDb.error);
@@ -216,7 +213,7 @@ export default function UserTable() {
 
     //
     return (
-        <div  className="rounded-md border overflow-x-auto m-4">
+        <div className="rounded-md border overflow-x-auto m-4">
             <div className="flex justify-between items-center m-4 p-2">
                 <h1 className="text-2xl font-bold"> Gestión de Miembros</h1>
             </div>

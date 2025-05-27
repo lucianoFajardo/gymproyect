@@ -44,7 +44,7 @@ export const getAllSubscriptionPlansAction = async () => {
             name: String(plan.namePlan),
             price: Number(plan.price),
             durationDaysPlan: Number(plan.durationDaysPlan),
-            descriptionPlan: plan.descriptionPlan ? String(plan.descriptionPlan) : "",
+            description: String(plan.descriptionPlan),
         }));
 
         if (formattedPlans.length === 0) {
