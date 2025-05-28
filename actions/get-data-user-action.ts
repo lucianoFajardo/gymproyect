@@ -17,7 +17,7 @@ export async function getDataUserAction(): Promise<UserModel[]> {
                 statusPlan: true,
                 subscriptionPlan: { // Esto ya selecciona los campos que necesitas del plan
                     select: {
-                        // id: true, // Descomenta si necesitas el ID del plan en el frontend
+                        id: true, // Descomenta si necesitas el ID del plan en el frontend
                         namePlan: true,
                         durationDaysPlan: true,
                         price: true,
@@ -34,6 +34,7 @@ export async function getDataUserAction(): Promise<UserModel[]> {
 
             if (user.subscriptionPlan) {
                 planInfo = {
+                    id: user.subscriptionPlan.id ? String(user.subscriptionPlan.id) : "", // Convertir a string
                     name: user.subscriptionPlan.namePlan,
                     durationDaysPlan: user.subscriptionPlan.durationDaysPlan, // Mantener como número
                     price: user.subscriptionPlan.price, // Mantener como número
@@ -57,9 +58,6 @@ export async function getDataUserAction(): Promise<UserModel[]> {
 
         // No necesitas la verificación de !parsedUsers, findMany devuelve [] si no hay resultados
         if (formattedUsers.length === 0) {
-            // Puedes decidir si esto es un error o simplemente no hay usuarios.
-            // Por ahora, devolvemos un array vacío, el frontend puede manejarlo.
-            // throw new Error("No se encontraron usuarios registrados.");
             console.log("No se encontraron usuarios registrados.");
         }
 

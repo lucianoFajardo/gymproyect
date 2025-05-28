@@ -19,6 +19,7 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
+    AlertDialogTrigger,
 } from "@/components/ui/alert-dialog" // Asegúrate que la ruta sea correcta
 import { Button } from "@/components/ui/button"; // Para botones de acciones
 import { Edit, Trash2, } from 'lucide-react'; // Iconos para acciones
@@ -31,6 +32,7 @@ import { PlansSchema } from '@/lib/zod';
 import { z } from 'zod';
 import { editSubscriptionPlanAction } from '@/actions/edit-subsription-plan-action';
 import { toast } from 'sonner';
+import { deletePlansAction } from '@/actions/delete-plans-action';
 
 export default function PlansTable() {
     // Aquí eventualmente recibirás tus datos como props o los obtendrás de un estado/contexto
@@ -47,12 +49,12 @@ export default function PlansTable() {
     const [editingPlan, setEditingPlan] = useState<Omit<SubscriptionPlanModel, "id">>({
         name: "",
         durationDaysPlan: 0,
-        price: "",
+        price: 0,
         description: "",
     }); //* Para editar el plan
-    const [isDeleteOpenDialog, setIsDeleteOpenDialog] = useState<boolean>(true
-    ); // Para el dialogo de eliminacion de un plan
-    const [userToDeleteId, setUserToDeleteId] = useState<string | null>(null); // Para almacenar el ID del usuario a eliminar
+    const [isDeleteOpenDialog, setIsDeleteOpenDialog] = useState<boolean>(false);
+    // Para el dialogo de eliminacion de un plan
+    const [planToDeleteId, setPlanToDeleteId] = useState<string | null>(null); // Para almacenar el ID del usuario a eliminar
 
     // Función para manejar la edición de un plan
     const handleEditPlans = (value: SubscriptionPlanModel) => {
@@ -72,7 +74,7 @@ export default function PlansTable() {
             if (updatePlanDb.success) {
                 const updatePlan = plans.map((plan) =>
                     plan.id === currenPlan.id
-                        ? { ...plan, ...valueFormEdit, price: String(valueFormEdit.price) }
+                        ? { ...plan, ...valueFormEdit, price: Number(valueFormEdit.price) }
                         : plan
                 );
                 setPlans(updatePlan); // Actualizar el estado con el plan editado
@@ -92,16 +94,23 @@ export default function PlansTable() {
         }
     }
 
-    const handleDelete = (planId: string) => {
+    const handleDelete = async (planId: string) => {
         // Aquí puedes implementar la lógica para eliminar el plan
         console.log('Eliminando plan con ID:', planId);
-        // Por ejemplo, llamar a una función de acción para eliminar el plan
-        // deleteSubscriptionPlanAction(planId).then(() => {
-        //     // Actualizar el estado después de eliminar
-        //     setPlans(plans.filter(plan => plan.id !== planId));
-        //     setIsDeleteDialogOpen(false);
-        //     setUserToDeleteId(null);
-        // });
+        setPlanToDeleteId(planId);
+        try {
+            const deleteDbPlan = await deletePlansAction(planId);
+            if (deleteDbPlan.success) {
+                // Actualizar el estado para eliminar el plan de la lista
+                setPlans(plans.filter((plan) => plan.id !== planId));
+                toast.success("Plan eliminado correctamente");
+            } else {
+                toast.error("Error al eliminar el plan. Por favor, inténtalo de nuevo.");
+            }
+        } catch (error) {
+            console.error("Error al eliminar el plan:", error);
+            toast.error("Error al eliminar el plan. Por favor, inténtalo de nuevo.");
+        }
     }
 
     return (
@@ -138,20 +147,56 @@ export default function PlansTable() {
                                     <TableCell className="max-w-xs truncate">{plan.description ? plan.description : "N/A"}</TableCell>
                                     <TableCell className="text-center">
                                         <div className="flex justify-end gap-2">
-                                            <Button variant="ghost" size="icon" onClick={() => {
-                                                console.log('Editar', plan.id)
-                                                handleEditPlans(plan);
-                                            }}>
+                                            <Button variant="ghost" size="icon" onClick={() => handleEditPlans(plan)}>
                                                 <Edit className="h-4 w-4" />
                                                 <span className="sr-only">Editar</span>
                                             </Button>
-                                            <Button variant="ghost" size="icon" onClick={() => {
-                                                setUserToDeleteId(plan.id);
-                                                setIsDeleteOpenDialog(true);
+                                            <AlertDialog open={isDeleteOpenDialog && planToDeleteId === plan.id} onOpenChange={(open) => {
+                                                if (!open) {
+                                                    setIsDeleteOpenDialog(false);
+                                                    setPlanToDeleteId(null); // Limpiar al cerrar
+                                                }
                                             }}>
-                                                <Trash2 className="h-4 w-4" />
-                                                <span className="sr-only">Eliminar</span>
-                                            </Button>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => {
+                                                            setPlanToDeleteId(plan.id ? plan.id : "");
+                                                            setIsDeleteOpenDialog(true);
+                                                        }}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                        <span className="sr-only">Eliminar</span>
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            Esta acción no se puede deshacer. Esto eliminará permanentemente
+                                                            al usuario y sus datos de nuestros servidores, perdiendo toda informacion asociada.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel onClick={() => {
+                                                            setIsDeleteOpenDialog(false);
+                                                            setPlanToDeleteId(null);
+                                                        }}>
+                                                            Cancelar
+                                                        </AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => {
+                                                            if (planToDeleteId) {
+                                                                handleDelete(planToDeleteId); // Llama a tu función de eliminar
+                                                                setIsDeleteOpenDialog(false); // Cierra el diálogo después de la acción
+                                                                setPlanToDeleteId(null);
+                                                            }
+                                                        }}>
+                                                            Sí, eliminar plan.
+                                                        </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -165,7 +210,7 @@ export default function PlansTable() {
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                 <DialogContent className="max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Editar datos del plan</DialogTitle>
+                        <DialogTitle> Editar datos del plan</DialogTitle>
                     </DialogHeader>
                     {/* Envolver el contenido en un <form> */}
                     <form onSubmit={(e) => {
@@ -204,7 +249,7 @@ export default function PlansTable() {
                                         name="price"
                                         type="number" // Asegúrate de que sea un número
                                         value={editingPlan?.price || 0}
-                                        onChange={(e) => setEditingPlan({ ...editingPlan, price: e.target.value })}
+                                        onChange={(e) => setEditingPlan({ ...editingPlan, price: Number(e.target.value) })}
                                     // required
                                     />
                                 </div>
@@ -239,28 +284,30 @@ export default function PlansTable() {
             </Dialog>
 
 
-            {/* AlertDialog para confirmar la eliminación del plan */}
-            {planIdToDelete && (
-                <AlertDialog open={isDeleteOpenDia} onOpenChange={setIsPlanDeleteDialogOpen}>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                Esta acción no se puede deshacer. Esto eliminará permanentemente el plan
-                                y podría afectar a los usuarios suscritos a este plan.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel onClick={closeDeleteConfirmationDialog}>
-                                Cancelar
-                            </AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDeletePlan} className="bg-red-600 hover:bg-red-700">
-                                Sí, eliminar plan
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-            )}
+            {/* AlertDialog para confirmar la eliminación del plan
+            <AlertDialog open={isDeleteOpenDialog} onOpenChange={() => console.log('Cerrando dialogo de eliminacion')}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Esta acción no se puede deshacer. Esto eliminará permanentemente el plan
+                            y podría afectar a los usuarios subscritos a este plan.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setIsDeleteOpenDialog(false)}>
+                            Cancelar
+                        </AlertDialogCancel>
+                        <AlertDialogAction onClick={() => {
+                            
+                            console.log("Si, Eliminar plan")
+                        }} className="bg-red-600 hover:bg-red-700">
+                            Sí, eliminar plan
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog> */}
+
         </div>
 
     );
