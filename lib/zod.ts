@@ -56,3 +56,10 @@ export const PlansSchema = object({
     description: string().optional(),
     durationDaysPlan: coerce.number({ required_error: "Duracion del plan requerido" }).min(1, { message: "La duracion del plan debe ser mayor a 0." }).max(368, { message: "El precio no puede ser mayor a 1 año en dias 368." }),
 })
+
+export const UpdateUserSubscriptionSchema = object({
+    userId: string().min(1, "El ID de usuario es requerido."),
+    startDate: string().refine((date) => !isNaN(Date.parse(date)), {
+        message: "La fecha de inicio debe ser una fecha válida.",
+    }),
+});

@@ -1,44 +1,44 @@
 "use server"
 
 import { db } from "@/lib/db";
-import { PlansSchema } from "@/lib/zod";
+import { UpdateUserSubscriptionSchema } from "@/lib/zod";
 import { z } from "zod";
 
-type parseEditPlan = z.infer<typeof PlansSchema>;
+type parseEditPlan = z.infer<typeof UpdateUserSubscriptionSchema>;
 
-export const editSubscriptionPlanAction = async (idPlan: string, dataPlan: parseEditPlan) => {
+export const editSubscriptionPlanAction = async (dataPlan: parseEditPlan) => {
     try {
-
-        const datavalidation = PlansSchema.safeParse(dataPlan)
+        const datavalidation = UpdateUserSubscriptionSchema.safeParse(dataPlan)
 
         if (!datavalidation.success) {
             console.log("Error de validacion:", datavalidation.error.format())
             return {
-                // Si aqui existe un error me retorna este JSON con un error
                 success: false,
-                error: datavalidation.error.flatten().fieldErrors,
-                message: "Error de validación al editar el plan.",
-            }
-        } else {
-            const updatePlanDb = await db.subscriptionPlan.update({
-                where: {
-                    id: idPlan,
-                },
-                data: {
-                    namePlan: dataPlan.name,
-                    durationDaysPlan: dataPlan.durationDaysPlan,
-                    price: dataPlan.price,
-                    descriptionPlan: dataPlan.description,
-                }
-            })
-            // Si aqui esta toda la data bien me retorna este JSON con un exito
-            return {
-                success: true,
-                error: null,
-                data: updatePlanDb,
-                message: "Plan actualizado correctamente",
-            }
+                error: datavalidation.error,
+                message: "Error de validación de datos.",
+            };
         }
+
+        const updateSubscriptionPlan = await db.createClientModel.update({
+            where:{
+                id: dataPlan.userId,
+            } , 
+            data: {
+                startPlan: dataPlan.startDate,
+            }
+        })
+
+        if (!updateSubscriptionPlan) {
+            return {
+                success: false,
+                message: "No se pudo actualizar la suscripción del usuario.",
+            };
+        }
+        return {
+            success: true,
+            data: updateSubscriptionPlan,
+            message: "Suscripción del usuario actualizada correctamente.",
+        };
 
     }
     catch (error) {

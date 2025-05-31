@@ -30,9 +30,9 @@ import { Label } from '@radix-ui/react-label';
 import { Input } from './input';
 import { PlansSchema } from '@/lib/zod';
 import { z } from 'zod';
-import { editSubscriptionPlanAction } from '@/actions/edit-subsription-plan-action';
 import { toast } from 'sonner';
 import { deletePlansAction } from '@/actions/delete-plans-action';
+import { editPlanAction } from '@/actions/edit-plans-action';
 
 export default function PlansTable() {
     // Aquí eventualmente recibirás tus datos como props o los obtendrás de un estado/contexto
@@ -70,7 +70,7 @@ export default function PlansTable() {
             return;
         }
         try {
-            const updatePlanDb = await editSubscriptionPlanAction(currenPlan.id, valueFormEdit);
+            const updatePlanDb = await editPlanAction(currenPlan.id, valueFormEdit);
             if (updatePlanDb.success) {
                 const updatePlan = plans.map((plan) =>
                     plan.id === currenPlan.id
@@ -141,7 +141,11 @@ export default function PlansTable() {
                         ) : (
                             plans.map((plan) => (
                                 <TableRow key={plan.id}>
-                                    <TableCell>{plan.name}</TableCell>
+                                    <TableCell>
+                                        <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                                            {plan.name}
+                                        </span>
+                                    </TableCell>
                                     <TableCell>{plan.durationDaysPlan}</TableCell>
                                     <TableCell>${plan.price}</TableCell>
                                     <TableCell className="max-w-xs truncate">{plan.description ? plan.description : "N/A"}</TableCell>
