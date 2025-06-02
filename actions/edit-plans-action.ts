@@ -2,15 +2,14 @@
 
 import { db } from "@/lib/db";
 import { PlansSchema } from "@/lib/zod";
+import { error } from "console";
 import { z } from "zod";
 
 type parseEditPlan = z.infer<typeof PlansSchema>;
 
 export const editPlanAction = async (idPlan: string, dataPlan: parseEditPlan) => {
     try {
-
         const datavalidation = PlansSchema.safeParse(dataPlan)
-
         if (!datavalidation.success) {
             console.log("Error de validacion:", datavalidation.error.format())
             return {
@@ -39,7 +38,6 @@ export const editPlanAction = async (idPlan: string, dataPlan: parseEditPlan) =>
                 message: "Plan actualizado correctamente",
             }
         }
-
     }
     catch (error) {
         console.log("Error encontrado al editar Plan: -> " + error)
@@ -51,4 +49,37 @@ export const editPlanAction = async (idPlan: string, dataPlan: parseEditPlan) =>
         }
     }
 
+}
+
+export const editPlanSubscriptionAction = async (idUser: string, idPlan: string) => {
+    try {
+        const updatePlanSubscriptionDb = await db.createClientModel.update({
+            where: {
+                id: idUser,
+            },
+            data: {
+                subscriptionPlanId: idPlan
+            }
+        });
+        if (!updatePlanSubscriptionDb) {
+            return {
+                success: false,
+                error: null,
+                message: "No se pudo actualizar el nuevo plan al usuario.",
+            };
+        }
+        return {
+            success: true,
+            data: updatePlanSubscriptionDb,
+            message: "Plan del usuario actualizado correctamente.",
+        }
+    } catch (error) {
+        console.log("Error encontrado al editar Plan: -> " + error)
+        return {
+            // Si aqui el servidor no responde o hay un error me retorna este JSON con un error
+            success: false,
+            error: error,
+            message: "Error interno del servidor al actualizar los datos.",
+        }
+    }
 }

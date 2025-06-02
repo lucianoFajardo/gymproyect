@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
-
 import {
     Table,
     TableBody,
@@ -11,7 +10,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { Edit } from 'lucide-react';
+import { CalendarDays, Replace } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogClose } from "@/components/ui/dialog"
 import {
     Tooltip,
@@ -21,15 +20,18 @@ import {
 } from "@/components/ui/tooltip";
 import { Card, CardContent, CardHeader, CardTitle } from './card';
 import { getDataUserActionWithSubscription } from '@/actions/get-data-user-action';
-import { UserModel } from '@/Model/User-model'; // Asumiendo que SubscriptionPlan está en UserModel o importado por separado
+import { UserModel } from '@/Model/User-model';
 import checkSubscriptionExpiration from '@/actions/expiration-subscription-action';
 import { Label } from './label';
 import { Input } from './input';
 
 import { editSubscriptionPlanAction } from '@/actions/edit-subsription-plan-action';
 import { toast } from 'sonner';
-// Asumiré que tienes una acción para actualizar la suscripción, por ejemplo:
-// import { updateUserSubscriptionAction } from '@/actions/update-user-subscription-action';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
+import { SubscriptionPlanModel } from '@/Model/Subscription-Plan-model';
+import { getAllSubscriptionPlansAction } from '@/actions/get-subscription-plan-action';
+import { editPlanSubscriptionAction } from '@/actions/edit-plans-action';
+
 
 export default function UserSubscriptionManagerTable() {
 
@@ -37,23 +39,18 @@ export default function UserSubscriptionManagerTable() {
     const [dataUserSubscription, setDataUserSubscription] = useState<dataFlitred[]>();
     const [expireSubscription, setExpireSubscription] = useState<Record<string, string>>({});
     const [userStatusMap, setUserStatusMap] = useState<Record<string, string>>({});
-
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [currentUserToEdit, setCurrentUserToEdit] = useState<dataFlitred | null>(null);
     const [newPaymentDate, setNewPaymentDate] = useState<string>("");
 
-
-
-    // Función para recargar los datos (opcional, pero útil después de una actualización)
+    //* Función para recargar los datos (opcional, pero útil después de una actualización)
     const fetchData = () => {
         getDataUserActionWithSubscription().then((data) => {
             setDataUserSubscription(data);
-            console.log("Datos de usuarios con suscripciones:", data);
-            // El segundo useEffect se encargará de recalcular las expiraciones y estados
         });
-        // En una aplicación real, también podrías obtener los planes disponibles aquí si son dinámicos
-        // getAvailablePlansAction().then(setAvailablePlans);
-    };
+        // Obtener los planes de subscripcion disponibles
+        getAllSubscriptionPlansAction().then(data => setAvailablePlans(data));
+    }
 
     useEffect(() => {
         fetchData();
@@ -80,12 +77,12 @@ export default function UserSubscriptionManagerTable() {
                 }, {} as Record<string, string>);
                 setUserStatusMap(statusMap);
             }).catch(error => {
-                console.error("Error calculating subscription expirations:", error);
+                toast.error("Error al verificar las suscripciones: " + error.message);
             });
         }
     }, [dataUserSubscription]);
 
-    const handleOpenEditDialog = (user: dataFlitred) => {
+    const handleOpenEditDialogSubscription = (user: dataFlitred) => {
         setCurrentUserToEdit(user);
         const currentStartPlanDate = user.startPlan ? new Date(user.startPlan).toISOString().split('T')[0] : "";
         setNewPaymentDate(currentStartPlanDate);
@@ -97,7 +94,7 @@ export default function UserSubscriptionManagerTable() {
         setCurrentUserToEdit(null);
         setNewPaymentDate("");
     };
-
+    //* --- Función para editar la suscripción (Fechas de pago)---
     const handleSaveSubscription = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         console.log("Guardando suscripción para el usuario:", currentUserToEdit);
@@ -119,6 +116,53 @@ export default function UserSubscriptionManagerTable() {
         } catch (error) {
             console.error("Error al actualizar la suscripción:", error);
             alert("Error al actualizar la suscripción.");
+        }
+    };
+
+    //* --- Estados para el diálogo de cambio de plan ---
+    const [isChangePlanDialogOpen, setIsChangePlanDialogOpen] = useState(false);
+    const [currentUserToChangePlan, setCurrentUserToChangePlan] = useState<dataFlitred | null>(null);
+    const [selectedPlanIdForChange, setSelectedPlanIdForChange] = useState<string | undefined>();
+    const [availablePlans, setAvailablePlans] = useState<SubscriptionPlanModel[]>();
+
+    //* --- Funciones para cambiar plan ---
+    const handleOpenChangePlanDialog = (user: dataFlitred) => {
+        setCurrentUserToChangePlan(user);
+        console.log("id Plan Actual:", user.subscriptionPlan?.id);
+        setSelectedPlanIdForChange(user.subscriptionPlan?.id); // Preseleccionar plan actual
+
+        //  setAvailablePlans(user.subscriptionPlan ? [user.subscriptionPlan] : []); // Asumir que el usuario tiene un plan asignado
+        setIsChangePlanDialogOpen(true);
+    };
+
+    const handleCloseChangePlanDialog = () => {
+        setIsChangePlanDialogOpen(false);
+        setCurrentUserToChangePlan(null);
+        setSelectedPlanIdForChange(undefined);
+    };
+
+    const handleSavePlanChange = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        console.log("id plan nuevo:", selectedPlanIdForChange);
+        if (!currentUserToChangePlan || !selectedPlanIdForChange) {
+            toast.error("Por favor, selecciona un usuario y un nuevo plan.");
+            return;
+        }
+        try {
+            const updatePlan = await editPlanSubscriptionAction(currentUserToChangePlan.id, selectedPlanIdForChange);
+            if (!updatePlan.success) {
+                console.error("Error al cambiar el plan:", updatePlan.error);
+                toast.error("Error al cambiar el plan.");
+                return;
+            }
+            toast.success("Plan cambiado correctamente.");
+            console.log("Plan cambiado:", updatePlan.data);
+            
+            fetchData();
+            handleCloseChangePlanDialog();
+        } catch (error) {
+            console.error("Error al cambiar el plan:", error);
+            toast.error("Error interno al cambiar el plan.");
         }
     };
 
@@ -179,13 +223,26 @@ export default function UserSubscriptionManagerTable() {
                                         <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
-                                                    <Button variant="ghost" size="icon" onClick={() => handleOpenEditDialog(user)}>
-                                                        <Edit className="h-4 w-4" />
-                                                        <span className="sr-only">Editar</span>
+                                                    <Button variant="ghost" size="icon" onClick={() => handleOpenEditDialogSubscription(user)}>
+                                                        <CalendarDays className="h-4 w-4" />
+                                                        <span className="sr-only">Fechas de pago</span>
                                                     </Button>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    <p>Actualizar Suscripción</p>
+                                                    <p>Fechas de pago</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button variant="ghost" size="icon" onClick={() => handleOpenChangePlanDialog(user)}>
+                                                        <Replace className="h-4 w-4" />
+                                                        <span className="sr-only">Cambiar plan</span>
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Cambiar Plan</p>
                                                 </TooltipContent>
                                             </Tooltip>
                                         </TooltipProvider>
@@ -199,20 +256,21 @@ export default function UserSubscriptionManagerTable() {
                     <p className="text-center text-gray-500 mt-6 py-4">No hay usuarios para mostrar.</p>
                 )}
             </CardContent>
+            {/* Diálogo para editar la suscripción */}
             {currentUserToEdit && (
                 <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                     <DialogContent className="max-w-2xl">
                         <DialogHeader>
                             <DialogTitle>Actualizar Suscripción de: {currentUserToEdit.name}</DialogTitle>
                             <DialogDescription>
-                                <span className="font-semibold">
+                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
                                     Plan actual: {currentUserToEdit.subscriptionPlan?.name || "No asignado"}.
                                 </span>
-                                <span className="font-semibold block mt-1">
+                                <span className="block m-1 px-2 py-1  text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
                                     Fecha limite a vencimiento de subscripcion: {expireSubscription[currentUserToEdit.id]}.
                                 </span>
-                                <span className={`block px-2 py-1 rounded-full text-xs ${userStatusMap[currentUserToEdit.id] === "Activo" ? "bg-green-100 text-green-800 " :
-                                    userStatusMap[currentUserToEdit.id] === "Inactivo" ? "bg-red-100 text-red-800" :
+                                <span className={`block px-2 py-1 rounded-full text-xs ${userStatusMap[currentUserToEdit.id] === "Activo" ? "bg-green-100 text-green-800 m-1" :
+                                    userStatusMap[currentUserToEdit.id] === "Inactivo" ? "bg-red-100 text-red-800 m-1" :
                                         "bg-gray-100 text-gray-800" // Estilo por defecto 
                                     }`}>
                                     Estado: {userStatusMap[currentUserToEdit.id] || "N/A"}.
@@ -222,29 +280,6 @@ export default function UserSubscriptionManagerTable() {
 
                         <form onSubmit={handleSaveSubscription}>
                             <div className="grid gap-6 py-2">
-                                {/* <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="planId" className="text-right col-span-1">
-                                        Cambiar Plan
-                                    </Label>
-                                    <div className="col-span-3">
-                                        <Select
-                                            value={newPlanId}
-                                            onValueChange={(value) => setNewPlanId(value)}
-                                        >
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Seleccionar un plan" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {availablePlans?.map((plan) => (
-                                                    <SelectItem key={plan.id} value={plan.id}>
-                                                        {plan.name} (${plan.price})
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div> */}
-
                                 <div className="grid grid-cols-4 items-center gap-4">
                                     <Label htmlFor="paymentDate" className="text-right col-span-1">
                                         Fecha de Pago
@@ -258,12 +293,10 @@ export default function UserSubscriptionManagerTable() {
                                         required
                                     />
                                 </div>
-                                {/* {(userStatusMap[currentUserToEdit.id] === "Inactivo" || currentUserToEdit.subscriptionPlan?.id !== newPlanId) && newPlanId && (
-                                    <p className="text-sm text-yellow-600 text-center px-2 py-1 bg-yellow-50 rounded-md">
-                                        Al guardar, la suscripción se {userStatusMap[currentUserToEdit.id] === "Inactivo" ? "Reactivará" : "Actualizará"} con el nuevo plan y fecha de pago,
-                                        tener en cuenta esto antes de actualizar el plan.
-                                    </p>
-                                )} */}
+                                <p className="text-sm text-yellow-600 text-center px-2 py-1 bg-yellow-50 rounded-md">
+                                    Al guardar, la suscripción con la nueva fecha de pago, se actualizara en la base de datos reajustando la fecha automaticamente
+                                    tener en cuenta esto antes de actualizar la fecha.
+                                </p>
                             </div>
                             <DialogFooter>
                                 <DialogClose asChild>
@@ -272,6 +305,61 @@ export default function UserSubscriptionManagerTable() {
                                     </Button>
                                 </DialogClose>
                                 <Button type="submit">Guardar Cambios</Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+            )};
+
+            {/* Diálogo para Cambiar Plan */}
+            {currentUserToChangePlan && (
+                <Dialog open={isChangePlanDialogOpen} onOpenChange={setIsChangePlanDialogOpen}>
+                    <DialogContent className="max-w-md">
+                        <DialogHeader>
+                            <DialogTitle>Cambiar Plan de: {currentUserToChangePlan.name}</DialogTitle>
+                            <DialogDescription>
+                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                                    Plan actual: {currentUserToChangePlan.subscriptionPlan?.name || "No asignado"}.
+                                </span>
+                            </DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={handleSavePlanChange}>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="changePlanSelect" className="text-right col-span-1">
+                                        Nuevo Plan
+                                    </Label>
+                                    <div className="col-span-3">
+                                        <Select
+                                            value={selectedPlanIdForChange}
+                                            onValueChange={setSelectedPlanIdForChange}
+                                        >
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Seleccionar un plan" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {availablePlans?.map((plan) => (
+                                                    <SelectItem key={plan.id} value={plan.id}>
+                                                        {plan.name} (${plan.price})
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                            </div>
+                            <p className="text-sm m-4
+                             text-yellow-600 text-center px-2 py-1 bg-yellow-50 rounded-md">
+                                Al guardar la suscripción con el nuevo plan , se actualizara en la base de datos
+                                y se modificara la fecha de pago automaticamente, tener en cuenta esto antes de actualizar el plan.
+                            </p>
+                            <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button type="button" variant="outline" onClick={handleCloseChangePlanDialog}>
+                                        Cancelar
+                                    </Button>
+                                </DialogClose>
+                                <Button type="submit">Guardar Plan</Button>
                             </DialogFooter>
                         </form>
                     </DialogContent>

@@ -496,7 +496,7 @@ export default function UserTable() {
                             </div>
                             <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                                 <span className="font-semibold text-muted-foreground">Plan (Nombre):</span>
-                                <span>{viewingUser.subscriptionPlan ? "si encontre algo" : ""}</span>
+                                <span>{viewingUser.subscriptionPlan!.name ? viewingUser.subscriptionPlan?.name : "N/A"}</span>
                             </div>
                             <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                                 <span className="font-semibold text-muted-foreground">Plan (Precio):</span>

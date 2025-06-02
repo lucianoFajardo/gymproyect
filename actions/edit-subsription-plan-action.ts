@@ -18,7 +18,6 @@ export const editSubscriptionPlanAction = async (dataPlan: parseEditPlan) => {
                 message: "Error de validación de datos.",
             };
         }
-
         const updateSubscriptionPlan = await db.createClientModel.update({
             where:{
                 id: dataPlan.userId,
@@ -52,3 +51,4 @@ export const editSubscriptionPlanAction = async (dataPlan: parseEditPlan) => {
     }
 
 }
+
