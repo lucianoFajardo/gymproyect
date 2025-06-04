@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Edit, EyeIcon, Trash2 } from "lucide-react"
+import { Edit, EyeIcon, Mail, Phone, Trash2 } from "lucide-react"
 import { getDataUserAction } from "@/actions/get-data-user-action"
 import { UserModel } from "../../Model/User-model"
 import checkSubscriptionExpiration from "@/actions/expiration-subscription-action"
@@ -28,6 +28,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog" // Asegúrate que la ruta sea correcta
 import { deleteDataUserAction } from "@/actions/delete-data-user-action"
+import { Badge } from "./badge"
 
 //TODO : Seguir aqui despues tengo que pulir unas cuantas cosas mas y estariamos listos , recordar que downgraidie el reactDom y react 
 export default function UserTable() {
@@ -262,18 +263,40 @@ export default function UserTable() {
                                     </TableCell>
                                     <TableCell className="font-medium">{user.name}</TableCell>
                                     <TableCell>{user.lastname}</TableCell>
-                                    <TableCell>{user.phone}</TableCell>
-                                    <TableCell>{user.age}</TableCell>
-                                    <TableCell>{user.gmail}</TableCell>
-                                    <TableCell>{new Date(user.startPlan).toLocaleDateString()}</TableCell>
+                                    <TableCell>
+                                        <Badge className="bg-green-200 text-green-800 dark:bg-green-600 dark:text-green-200">
+                                            <Phone />
+                                            {user.phone}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge className="bg-blue-400 text-white dark:bg-blue-600">
+                                            {user.age}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge className="bg-gray-200 text-gray">
+                                            <Mail />
+                                            {user.gmail}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                            {new Date(user.startPlan).toLocaleDateString()}
+                                        </span>
+                                    </TableCell>
                                     {/* aqui tiene que calcular la fecha de los clientes y sacarle cuando se le vende la subscripcion */}
-                                    <TableCell>{expireSubscription[user.id]}</TableCell>
+                                    <TableCell>
+                                        <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                            {expireSubscription[user.id]}
+                                        </span>
+                                    </TableCell>
                                     {/* Cambiar el color del estado del plan según su valor */}
                                     <TableCell>
                                         {userStatusMap[user.id] ? (
                                             <span
-                                                className={`px-2 py-1 rounded-full text-xs ${userStatusMap[user.id] === "Activo" ? "bg-green-100 text-green-800 " :
-                                                    userStatusMap[user.id] === "Inactivo" ? "bg-red-100 text-red-800" :
+                                                className={`px-2 py-1 rounded-full text-xs ${userStatusMap[user.id] === "Activo" ? "bg-green-200 text-green-800 " :
+                                                    userStatusMap[user.id] === "Inactivo" ? "bg-red-200 text-red-800" :
                                                         "bg-gray-100 text-gray-800" // Estilo por defecto 
                                                     }`}
                                             >
@@ -285,7 +308,11 @@ export default function UserTable() {
                                             </span>
                                         )}
                                     </TableCell>
-                                    <TableCell>{user.subscriptionPlan?.name ?? "N/A"}</TableCell>
+                                    <TableCell>
+                                        <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                                            {user.subscriptionPlan?.name ?? "N/A"}
+                                        </span>
+                                    </TableCell>
                                     <TableCell>{user.price ? `$${user.price}` : "N/A"}</TableCell>
                                     {/* Aqui genero el codigo qr para poder scanear al usuario */}
                                     <TableCell className="text-right">
@@ -461,7 +488,10 @@ export default function UserTable() {
                             </div>
                             <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                                 <span className="font-semibold text-muted-foreground">Teléfono:</span>
-                                <span>{viewingUser.phone}</span>
+                                <Badge className="bg-green-200 text-green-800 dark:bg-green-600 dark:text-green-200">
+                                    <Phone />
+                                    {viewingUser.phone}
+                                </Badge>
                             </div>
                             <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                                 <span className="font-semibold text-muted-foreground">Edad:</span>
@@ -473,11 +503,11 @@ export default function UserTable() {
                             </div>
                             <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                                 <span className="font-semibold text-muted-foreground">Inicio Plan:</span>
-                                <span>{new Date(viewingUser.startPlan).toLocaleDateString()}</span>
+                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800"> {new Date(viewingUser.startPlan).toLocaleDateString()}</span>
                             </div>
                             <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                                 <span className="font-semibold text-muted-foreground">Vencimiento Plan:</span>
-                                <span>{expireSubscription[viewingUser.id] || "N/D"}</span>
+                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">{expireSubscription[viewingUser.id] || "N/D"}</span>
                             </div>
                             <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                                 <span className="font-semibold text-muted-foreground">Estado Membresía:</span>
@@ -496,7 +526,9 @@ export default function UserTable() {
                             </div>
                             <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                                 <span className="font-semibold text-muted-foreground">Plan (Nombre):</span>
-                                <span>{viewingUser.subscriptionPlan!.name ? viewingUser.subscriptionPlan?.name : "N/A"}</span>
+                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                                    {viewingUser.subscriptionPlan!.name ? viewingUser.subscriptionPlan?.name : "N/A"}
+                                </span>
                             </div>
                             <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                                 <span className="font-semibold text-muted-foreground">Plan (Precio):</span>

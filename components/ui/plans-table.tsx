@@ -33,6 +33,7 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import { deletePlansAction } from '@/actions/delete-plans-action';
 import { editPlanAction } from '@/actions/edit-plans-action';
+import { Badge } from "./badge"
 
 export default function PlansTable() {
     // Aquí eventualmente recibirás tus datos como props o los obtendrás de un estado/contexto
@@ -146,13 +147,22 @@ export default function PlansTable() {
                                             {plan.name}
                                         </span>
                                     </TableCell>
-                                    <TableCell>{plan.durationDaysPlan}</TableCell>
-                                    <TableCell>${plan.price}</TableCell>
+                                    <TableCell>
+                                        <Badge className='bg-blue-400 text-white'>
+                                            {plan.durationDaysPlan}
+                                        </Badge>
+
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge className='bg-green-100 text-green-800 '>
+                                            ${plan.price}
+                                        </Badge>
+                                    </TableCell>
                                     <TableCell className="max-w-xs truncate">{plan.description ? plan.description : "N/A"}</TableCell>
                                     <TableCell className="text-center">
-                                        <div className="flex justify-end gap-2">
-                                            <Button variant="ghost" size="icon" onClick={() => handleEditPlans(plan)}>
-                                                <Edit className="h-4 w-4" />
+                                        <div className="flex justify-end gap-2 ">
+                                            <Button className='cursor-pointer' variant="ghost" size="icon" onClick={() => handleEditPlans(plan)}>
+                                                <Edit className="h-4 w-4 " />
                                                 <span className="sr-only">Editar</span>
                                             </Button>
                                             <AlertDialog open={isDeleteOpenDialog && planToDeleteId === plan.id} onOpenChange={(open) => {
@@ -163,6 +173,7 @@ export default function PlansTable() {
                                             }}>
                                                 <AlertDialogTrigger asChild>
                                                     <Button
+                                                        className="cursor-pointer"
                                                         variant="ghost"
                                                         size="icon"
                                                         onClick={() => {

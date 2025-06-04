@@ -2,7 +2,6 @@
 
 import { db } from "@/lib/db";
 import { PlansSchema } from "@/lib/zod";
-import { error } from "console";
 import { z } from "zod";
 
 type parseEditPlan = z.infer<typeof PlansSchema>;
@@ -71,6 +70,7 @@ export const editPlanSubscriptionAction = async (idUser: string, idPlan: string)
         return {
             success: true,
             data: updatePlanSubscriptionDb,
+            error: null,
             message: "Plan del usuario actualizado correctamente.",
         }
     } catch (error) {

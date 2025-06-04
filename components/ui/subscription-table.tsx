@@ -150,6 +150,7 @@ export default function UserSubscriptionManagerTable() {
         }
         try {
             const updatePlan = await editPlanSubscriptionAction(currentUserToChangePlan.id, selectedPlanIdForChange);
+            
             if (!updatePlan.success) {
                 console.error("Error al cambiar el plan:", updatePlan.error);
                 toast.error("Error al cambiar el plan.");
@@ -157,7 +158,7 @@ export default function UserSubscriptionManagerTable() {
             }
             toast.success("Plan cambiado correctamente.");
             console.log("Plan cambiado:", updatePlan.data);
-            
+
             fetchData();
             handleCloseChangePlanDialog();
         } catch (error) {
