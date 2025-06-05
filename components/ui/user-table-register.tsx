@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Edit, EyeIcon, Mail, Phone, Trash2 } from "lucide-react"
+import { Edit, EyeIcon, Mail, Phone, Trash2, UserCog2 } from "lucide-react"
 import { getDataUserAction } from "@/actions/get-data-user-action"
 import { UserModel } from "../../Model/User-model"
 import checkSubscriptionExpiration from "@/actions/expiration-subscription-action"
@@ -215,8 +215,9 @@ export default function UserTable() {
     //
     return (
         <div className="rounded-md border overflow-x-auto m-4">
-            <div className="flex justify-between items-center m-4 p-2">
-                <h1 className="text-2xl font-bold"> Gestión de Miembros</h1>
+            <div className="flex items-center m-4">
+                <UserCog2 className="h-10 w-10"/>
+                <h1 className="text-2xl font-bold pl-5"> Gestión de Miembros</h1>
             </div>
 
             <div className="rounded-md border overflow-x-auto m-4">

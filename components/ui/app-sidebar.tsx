@@ -110,7 +110,7 @@ const data = {
       items: [
         {
           title: "Ingresar asistencias", // Aqui se tendria que agregar un apartado para poder escanear el qr de los usuarios.
-          url: "/dashboard/manage-plans",
+          url: "/dashboard/manage-assists",
         },
         {
           title: "Gestionar asistencias",

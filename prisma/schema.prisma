@@ -66,9 +66,7 @@ model Authenticator {
   credentialDeviceType String
   credentialBackedUp   Boolean
   transports           String?
-
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@id([userId, credentialID])
 }
 
@@ -78,7 +76,7 @@ model SubscriptionPlan {
   namePlan           String              @default("Plan estandar")
   durationDaysPlan   Int                 @default(30)
   descriptionPlan    String?
-  subscriptionPlanId String          
+  subscriptionPlanId String
   clients            CreateClientModel[]
 }
 
@@ -98,4 +96,14 @@ model CreateClientModel {
   updateDateAt       DateTime          @updatedAt
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
+  assists            Assists[] 
+}
+
+model Assists {
+  id        String   @id @default(cuid())
+  clientId  String
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+  client CreateClientModel @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  @@index([clientId])
 }
