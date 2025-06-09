@@ -1,13 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useEffect, useMemo, useState } from "react"
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Edit, EyeIcon, Mail, Phone, Trash2, UserCog2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, Edit, EyeIcon, Mail, Phone, Trash2 } from "lucide-react"
 import { getDataUserAction } from "@/actions/get-data-user-action"
 import { UserModel } from "../../Model/User-model"
 import checkSubscriptionExpiration from "@/actions/expiration-subscription-action"
@@ -29,28 +28,30 @@ import {
 } from "@/components/ui/alert-dialog" // Asegúrate que la ruta sea correcta
 import { deleteDataUserAction } from "@/actions/delete-data-user-action"
 import { Badge } from "./badge"
+import { Card, CardDescription, CardHeader, CardTitle } from "./card"
 
 //TODO : Seguir aqui despues tengo que pulir unas cuantas cosas mas y estariamos listos , recordar que downgraidie el reactDom y react 
 export default function UserTable() {
+
+    const ITEMS_PER_PAGE = 15; // Define cuántos usuarios mostrar por página
     const [users, setUsers] = useState<UserModel[]>([])
     const [expireSubscription, setExpireSubscription] = useState<Record<string, string>>({});
     const [userStatusMap, setUserStatusMap] = useState<Record<string, string>>({});
+    const [currentPage, setCurrentPage] = useState<number>(1); //* Estado para la página actual
 
-    // Obtener los datos de los usuarios al cargar el componente
+    //* Obtener los datos de los usuarios al cargar el componente
     useEffect(() => {
         getDataUserAction().then((data) => {
             if (!data || data.length === 0) {
                 toast.error("Error", { description: "No se encontraron usuarios en la base de datos." });
+                setUsers([])
                 return;
             }
             setUsers(data)
+            setCurrentPage(1); // Reiniciar a la primera página al cargar los datos
         });
     }, []);
-
     const { Canvas } = useQRCode();
-    // UseState para almacenar los datos y actualizar los estados
-
-
     // Estado para el diálogo de eliminación
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [userToDeleteId, setUserToDeleteId] = useState<string | null>(null);
@@ -79,6 +80,21 @@ export default function UserTable() {
         setIsViewDetailsDialogOpen(true);
     };
 
+    //* Lógica de paginación
+    const totalPages = Math.ceil(users.length / ITEMS_PER_PAGE);
+    const paginatedUsers = useMemo(() => {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        const endIndex = startIndex + ITEMS_PER_PAGE;
+        return users.slice(startIndex, endIndex);
+    }, [users, currentPage]);
+
+    const handleNextPage = () => {
+        setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+    };
+
+    const handlePreviousPage = () => {
+        setCurrentPage((prev) => Math.max(prev - 1, 1));
+    };
 
     // Estado para manejar la fecha de inicio del plan y su vencimiento
     useEffect(() => {
@@ -112,25 +128,6 @@ export default function UserTable() {
             });
         }
     }, [users]); // Este useEffect se ejecuta cada vez que el estado 'users' cambia
-
-
-    // Manejar selección de fila
-    const handleRowSelect = (id: string) => {
-        if (selectedRows.includes(id)) {
-            setSelectedRows(selectedRows.filter((rowId) => rowId !== id))
-        } else {
-            setSelectedRows([...selectedRows, id])
-        }
-    }
-
-    // Manejar selección de todas las filas
-    const handleSelectAll = () => {
-        if (selectedRows.length === users.length) {
-            setSelectedRows([])
-        } else {
-            setSelectedRows(users.map((user) => user.id))
-        }
-    }
 
     // Actualizar la función handleEdit para incluir todos los campos
     const handleEdit = (user: UserModel) => {
@@ -214,23 +211,21 @@ export default function UserTable() {
 
     //
     return (
-        <div className="rounded-md border overflow-x-auto m-4">
-            <div className="flex items-center m-4">
-                <UserCog2 className="h-10 w-10"/>
-                <h1 className="text-2xl font-bold pl-5"> Gestión de Miembros</h1>
-            </div>
-
-            <div className="rounded-md border overflow-x-auto m-4">
+        <Card className="rounded-md border overflow-x-auto m-2">
+            <CardHeader>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <div>
+                        <CardTitle className="text-2xl font-bold">Gestion de usuarios</CardTitle>
+                        <CardDescription className='p-2'>Gestionar los datos de usuario, editarlos o eliminarlos.</CardDescription>
+                    </div>
+                </div>
+            </CardHeader>
+            <div className="rounded-md border overflow-x-auto m-2">
                 <Table>
+                    <TableCaption>Lista de usuarios disponibles.</TableCaption>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-12">
-                                <Checkbox
-                                    checked={selectedRows.length === users.length && users.length > 0}
-                                    onCheckedChange={handleSelectAll}
-                                    aria-label="Seleccionar todos"
-                                />
-                            </TableHead>
+
                             <TableHead>Nombre</TableHead>
                             <TableHead>Apellido</TableHead>
                             <TableHead>Teléfono</TableHead>
@@ -246,22 +241,15 @@ export default function UserTable() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {users.length === 0 ? (
+                        {paginatedUsers.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={11} className="text-center py-6 text-muted-foreground">
                                     No hay usuarios para mostrar
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            users.map((user) => (
+                            paginatedUsers.map((user) => (
                                 <TableRow key={user.id} className={selectedRows.includes(user.id) ? "bg-muted/50" : ""}>
-                                    <TableCell>
-                                        <Checkbox
-                                            checked={selectedRows.includes(user.id)}
-                                            onCheckedChange={() => handleRowSelect(user.id)}
-                                            aria-label={`Seleccionar ${user.name}`}
-                                        />
-                                    </TableCell>
                                     <TableCell className="font-medium">{user.name}</TableCell>
                                     <TableCell>{user.lastname}</TableCell>
                                     <TableCell>
@@ -383,6 +371,32 @@ export default function UserTable() {
                     </TableBody>
                 </Table>
             </div>
+            {/* Controles de Paginación */}
+            {totalPages > 1 && (
+                <div className="flex items-center justify-end space-x-2 py-4 px-1">
+                    <Button
+                        variant="link"
+                        size="sm"
+                        onClick={handlePreviousPage}
+                        disabled={currentPage === 1}
+                    >
+                        <ChevronLeft className="h-4 w-4 mr-1" />
+                        Anterior
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                        Página {currentPage} de {totalPages}
+                    </span>
+                    <Button
+                        variant="link"
+                        size="sm"
+                        onClick={handleNextPage}
+                        disabled={currentPage === totalPages}
+                    >
+                        Siguiente
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                </div>
+            )}
 
             {/* Actualizar el diálogo de edición con todos los campos */}
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -562,6 +576,6 @@ export default function UserTable() {
                     </DialogContent>
                 </Dialog>
             )}
-        </div>
+        </Card>
     )
 }

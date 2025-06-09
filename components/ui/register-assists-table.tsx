@@ -28,7 +28,7 @@ export default function RegisterAssistsTable() {
     const [selectedFilterDate, setSelectedFilterDate] = useState<Date | undefined>(startOfDay(new Date()));
     const [filterActive, setFilterActive] = useState<boolean>(true);
 
-    // Estados para paginación
+    //* Estados para paginación
     const [currentPage, setCurrentPage] = useState<number>(1);
 
     useEffect(() => {

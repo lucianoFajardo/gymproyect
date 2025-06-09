@@ -1,16 +1,17 @@
 "use client"
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import {
     Table,
     TableBody,
+    TableCaption,
     TableCell,
     TableHead,
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { CalendarDays, Replace } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Replace } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogClose } from "@/components/ui/dialog"
 import {
     Tooltip,
@@ -18,7 +19,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Card, CardContent, CardHeader, CardTitle } from './card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card';
 import { getDataUserActionWithSubscription } from '@/actions/get-data-user-action';
 import { UserModel } from '@/Model/User-model';
 import checkSubscriptionExpiration from '@/actions/expiration-subscription-action';
@@ -32,9 +33,9 @@ import { SubscriptionPlanModel } from '@/Model/Subscription-Plan-model';
 import { getAllSubscriptionPlansAction } from '@/actions/get-subscription-plan-action';
 import { editPlanSubscriptionAction } from '@/actions/edit-plans-action';
 
-
 export default function UserSubscriptionManagerTable() {
 
+    const ITEMS_PER_PAGE = 15; // Define cuántos usuarios mostrar por página
     type dataFlitred = Omit<UserModel, "lastname" | "age" | "phone" | "gmail" | "createdAt" | "statusPlan">;
     const [dataUserSubscription, setDataUserSubscription] = useState<dataFlitred[]>();
     const [expireSubscription, setExpireSubscription] = useState<Record<string, string>>({});
@@ -42,11 +43,18 @@ export default function UserSubscriptionManagerTable() {
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [currentUserToEdit, setCurrentUserToEdit] = useState<dataFlitred | null>(null);
     const [newPaymentDate, setNewPaymentDate] = useState<string>("");
+    const [currentPage, setCurrentPage] = useState<number>(1); //* Estado para la página actual
 
     //* Función para recargar los datos (opcional, pero útil después de una actualización)
     const fetchData = () => {
         getDataUserActionWithSubscription().then((data) => {
+            if (!data || data.length === 0) {
+                toast.error("No se encontraron usuarios con suscripciones.");
+                setDataUserSubscription([]);
+                return;
+            }
             setDataUserSubscription(data);
+            setCurrentPage(1); // Reiniciar a la primera página al cargar nuevos datos
         });
         // Obtener los planes de subscripcion disponibles
         getAllSubscriptionPlansAction().then(data => setAvailablePlans(data));
@@ -55,6 +63,23 @@ export default function UserSubscriptionManagerTable() {
     useEffect(() => {
         fetchData();
     }, []);
+
+    //* Lógica de paginación
+    const totalPages = Math.ceil((dataUserSubscription?.length ?? 0) / ITEMS_PER_PAGE);
+
+    const paginatedSubs = useMemo(() => {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        const endIndex = startIndex + ITEMS_PER_PAGE;
+        return (dataUserSubscription ?? []).slice(startIndex, endIndex);
+    }, [dataUserSubscription, currentPage]);
+
+    const handleNextPage = () => {
+        setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+    };
+
+    const handlePreviousPage = () => {
+        setCurrentPage((prev) => Math.max(prev - 1, 1));
+    };
 
     useEffect(() => {
         if (dataUserSubscription && dataUserSubscription.length > 0) {
@@ -150,7 +175,6 @@ export default function UserSubscriptionManagerTable() {
         }
         try {
             const updatePlan = await editPlanSubscriptionAction(currentUserToChangePlan.id, selectedPlanIdForChange);
-            
             if (!updatePlan.success) {
                 console.error("Error al cambiar el plan:", updatePlan.error);
                 toast.error("Error al cambiar el plan.");
@@ -170,11 +194,17 @@ export default function UserSubscriptionManagerTable() {
     return (
         <Card className="m-4">
             <CardHeader>
-                <CardTitle className="text-2xl font-bold text-center">Gestión de Suscripciones</CardTitle>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <div>
+                        <CardTitle className="text-2xl font-bold">Gestion de subscripciones</CardTitle>
+                        <CardDescription className='p-2'>Gestionar los datos de subscripciones, cambiar fechas de pago y planes</CardDescription>
+                    </div>
+                </div>
             </CardHeader>
             <CardContent>
                 <div className="overflow-x-auto">
                     <Table>
+                        <TableCaption>Lista de subcripciones disponibles.</TableCaption>
                         <TableHeader>
                             <TableRow>
                                 <TableHead className="w-[200px]">Usuario</TableHead>
@@ -186,75 +216,109 @@ export default function UserSubscriptionManagerTable() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {dataUserSubscription?.map((user) => (
-                                <TableRow key={user.id}>
-                                    <TableCell className="font-medium">{user.name}</TableCell>
-                                    <TableCell>
-                                        <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
-                                            {user.subscriptionPlan?.name}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell>
-                                        <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                            {user.startPlan ? new Date(user.startPlan).toLocaleDateString() : "No disponible"}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell>
-                                        <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                            {expireSubscription[user.id]}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell>
-                                        {userStatusMap[user.id] ? (
-                                            <span
-                                                className={`px-2 py-1 rounded-full text-xs ${userStatusMap[user.id] === "Activo" ? "bg-green-100 text-green-800 " :
-                                                    userStatusMap[user.id] === "Inactivo" ? "bg-red-100 text-red-800" :
-                                                        "bg-gray-100 text-gray-800"
-                                                    }`}
-                                            >
-                                                {userStatusMap[user.id]}
-                                            </span>
-                                        ) : (
-                                            <span className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">
-                                                Calculando...
-                                            </span>
-                                        )}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Button variant="ghost" size="icon" onClick={() => handleOpenEditDialogSubscription(user)}>
-                                                        <CalendarDays className="h-4 w-4" />
-                                                        <span className="sr-only">Fechas de pago</span>
-                                                    </Button>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>Fechas de pago</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
-                                        <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Button variant="ghost" size="icon" onClick={() => handleOpenChangePlanDialog(user)}>
-                                                        <Replace className="h-4 w-4" />
-                                                        <span className="sr-only">Cambiar plan</span>
-                                                    </Button>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>Cambiar Plan</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
+                            {paginatedSubs.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="text-center py-4">
+                                        Cargando usuarios...
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                            ) :
+                                (paginatedSubs.map((user) => (
+                                    <TableRow key={user.id}>
+                                        <TableCell className="font-medium">{user.name}</TableCell>
+                                        <TableCell>
+                                            <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                                                {user.subscriptionPlan?.name}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                {user.startPlan ? new Date(user.startPlan).toLocaleDateString() : "No disponible"}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                                {expireSubscription[user.id]}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
+                                            {userStatusMap[user.id] ? (
+                                                <span
+                                                    className={`px-2 py-1 rounded-full text-xs ${userStatusMap[user.id] === "Activo" ? "bg-green-100 text-green-800 " :
+                                                        userStatusMap[user.id] === "Inactivo" ? "bg-red-100 text-red-800" :
+                                                            "bg-gray-100 text-gray-800"
+                                                        }`}
+                                                >
+                                                    {userStatusMap[user.id]}
+                                                </span>
+                                            ) : (
+                                                <span className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">
+                                                    Calculando...
+                                                </span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button variant="ghost" size="icon" onClick={() => handleOpenEditDialogSubscription(user)}>
+                                                            <CalendarDays className="h-4 w-4" />
+                                                            <span className="sr-only">Fechas de pago</span>
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>Fechas de pago</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button variant="ghost" size="icon" onClick={() => handleOpenChangePlanDialog(user)}>
+                                                            <Replace className="h-4 w-4" />
+                                                            <span className="sr-only">Cambiar plan</span>
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>Cambiar Plan</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        </TableCell>
+                                    </TableRow>
+                                )))}
                         </TableBody>
                     </Table>
                 </div>
                 {dataUserSubscription?.length === 0 && (
                     <p className="text-center text-gray-500 mt-6 py-4">No hay usuarios para mostrar.</p>
+                )}
+
+                {/* Controles de Paginación */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-end space-x-2 py-4 px-1">
+                        <Button
+                            variant="link"
+                            size="sm"
+                            onClick={handlePreviousPage}
+                            disabled={currentPage === 1}
+                        >
+                            <ChevronLeft className="h-4 w-4 mr-1" />
+                            Anterior
+                        </Button>
+                        <span className="text-sm text-muted-foreground">
+                            Página {currentPage} de {totalPages}
+                        </span>
+                        <Button
+                            variant="link"
+                            size="sm"
+                            onClick={handleNextPage}
+                            disabled={currentPage === totalPages}
+                        >
+                            Siguiente
+                            <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
+                    </div>
                 )}
             </CardContent>
             {/* Diálogo para editar la suscripción */}

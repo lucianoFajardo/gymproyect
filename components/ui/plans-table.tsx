@@ -34,6 +34,7 @@ import { toast } from 'sonner';
 import { deletePlansAction } from '@/actions/delete-plans-action';
 import { editPlanAction } from '@/actions/edit-plans-action';
 import { Badge } from "./badge"
+import { Card, CardDescription, CardHeader, CardTitle } from './card';
 
 export default function PlansTable() {
     // Aquí eventualmente recibirás tus datos como props o los obtendrás de un estado/contexto
@@ -115,11 +116,15 @@ export default function PlansTable() {
     }
 
     return (
-        <div className="rounded-md border overflow-x-auto m-4">
-            <div className="flex justify-between items-center m-4 p-2">
-                <h1 className="text-2xl font-bold"> Gestión de Planes</h1>
-            </div>
-
+        <Card className="rounded-md border overflow-x-auto m-4">
+            <CardHeader>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <div>
+                        <CardTitle className="text-2xl font-bold">Gestion de planes</CardTitle>
+                        <CardDescription className='p-2'>Gestionar los planes disponibles del gimnasio, editarlos o eliminarlos.</CardDescription>
+                    </div>
+                </div>
+            </CardHeader>
             <div className="rounded-md border overflow-x-auto m-4">
                 <Table>
                     <TableCaption>Lista de planes de suscripción disponibles.</TableCaption>
@@ -190,7 +195,7 @@ export default function PlansTable() {
                                                         <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
                                                         <AlertDialogDescription>
                                                             Esta acción no se puede deshacer. Esto eliminará permanentemente
-                                                            al usuario y sus datos de nuestros servidores, perdiendo toda informacion asociada.
+                                                            los planes y todas sus relaciones de nuestros servidores, perdiendo toda informacion asociada.
                                                         </AlertDialogDescription>
                                                     </AlertDialogHeader>
                                                     <AlertDialogFooter>
@@ -323,7 +328,7 @@ export default function PlansTable() {
                 </AlertDialogContent>
             </AlertDialog> */}
 
-        </div>
+        </Card>
 
     );
 }
