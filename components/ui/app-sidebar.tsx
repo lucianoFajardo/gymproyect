@@ -114,7 +114,7 @@ const data = {
         },
         {
           title: "Gestionar asistencias",
-          url: "/dashboard/manage-subscriptions",
+          url: "/dashboard/manage-assists/view-table-assists",
         },
         {
           title: "Generar reportes",

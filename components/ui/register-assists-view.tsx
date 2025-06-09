@@ -86,18 +86,14 @@ export default function RegisterAssistsView() {
 
                     <TabsContent value="qr">
                         {/* Aqui va el scaneo con el codigo qr */}
-                        <Scanner onScan={(result) => {
-                            handleQrRegister(result);
-                            console.log(result)
-                        }} />
+                        <Scanner onScan={(result) =>  handleQrRegister(result) } />
                     </TabsContent>
-
                     <TabsContent value='manual'>
                         <div className="flex items-center justify-center h-full w-full bg-gray-50 text-gray-700 text-lg font-semibold rounded-lg shadow-inner p-4">
                             <p>🚀 ¡Próximamente!</p>
                         </div>
                     </TabsContent>
-
+                    {/* PARA REGISTRAR MANUALMENTE LA ASISTENCIA DEL USUARIO */}
                     {/* <TabsContent value="manual">
                         <div className="space-y-6 p-4 border rounded-md bg-slate-50 dark:bg-slate-800">
                             <div className="space-y-2">
