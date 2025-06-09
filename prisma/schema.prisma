@@ -66,7 +66,8 @@ model Authenticator {
   credentialDeviceType String
   credentialBackedUp   Boolean
   transports           String?
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                 User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@id([userId, credentialID])
 }
 
@@ -96,14 +97,34 @@ model CreateClientModel {
   updateDateAt       DateTime          @updatedAt
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
-  assists            Assists[] 
+  assists            Assists[]
 }
 
 model Assists {
-  id        String   @id @default(cuid())
+  id        String            @id @default(cuid())
   clientId  String
-  date      DateTime @default(now())
-  createdAt DateTime @default(now())
-  client CreateClientModel @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  date      DateTime          @default(now())
+  createdAt DateTime          @default(now())
+  client    CreateClientModel @relation(fields: [clientId], references: [id], onDelete: Cascade)
   @@index([clientId])
+}
+
+model Product {
+  id                 String    @id @default(cuid())
+  nameProduct        String
+  descriptionProduct String?
+  priceProduct       Int
+  stockProduct       Int
+  createAt           DateTime  @default(now())
+  updateAt           DateTime  @updatedAt
+  categoryId         String
+  category           Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+}
+
+model Category {
+  id           String    @id @default(cuid())
+  nameCategory String
+  createAt     DateTime  @default(now())
+  updateAt     DateTime  @updatedAt
+  products     Product[]
 }

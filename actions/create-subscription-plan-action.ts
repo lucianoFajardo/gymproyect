@@ -15,10 +15,11 @@ export const createSubscriptionPlanAction = async (value: z.infer<typeof PlansSc
     try {
         const newSubscriptionPlan = await db.subscriptionPlan.create({
             data: {
+                subscriptionPlanId: crypto.randomUUID(), 
                 namePlan: data.name,
                 price: data.price,
                 durationDaysPlan: data.durationDaysPlan,
-                descriptionPlan: data.description? data.description : "",
+                descriptionPlan: data.description ? data.description : "",
             }
         })
         return {

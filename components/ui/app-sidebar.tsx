@@ -73,11 +73,6 @@ const data = {
           title: "Gestionar usuarios",
           url: "/dashboard/view-users",
         },
-        {
-          //* Aqui tendria que tener algun apartado para poder crear un reporte en formato pdf o excel.
-          title: "Generar reporte usuarios",
-          url: "#",
-        },
       ],
     },
     {
@@ -97,10 +92,7 @@ const data = {
           title: "Gestionar subscripciones", //Aqui se tiene que poder actualizar las subscripciones de los usuarios para que puedan ingresar o no al gym
           url: "/dashboard/manage-subscriptions",
         },
-        {
-          title: "Generar reportes",
-          url: "#",
-        },
+
       ],
     },
     {
@@ -116,10 +108,6 @@ const data = {
           title: "Gestionar asistencias",
           url: "/dashboard/manage-assists/view-table-assists",
         },
-        {
-          title: "Generar reportes",
-          url: "#",
-        },
       ],
     },
     {
@@ -129,11 +117,15 @@ const data = {
       items: [
         {
           title: "Crear productos",
-          url: "/dashboard/manage-plans",
+          url: "/dashboard/products/create-product",
+        },
+        {
+          title: "Crear categorias",
+          url: "/dashboard/products/categories-create",
         },
         {
           title: "Crear servicios",
-          url: "/dashboard/manage-plans",
+          url: "/dashboard/services/#",
         },
         {
           title: "Gestionar servicios",

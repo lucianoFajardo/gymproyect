@@ -51,7 +51,7 @@ export const UpdateClientSchema = object({
 })
 
 export const PlansSchema = object({
-    name: string({ required_error: "Nombre de plan requerido" }).min(2, { message: "El nombre debe tener al menos 2 caracteres." }).regex(/^[a-zA-Z]+(\s[a-zA-Z]+)*$/, { message: "El nombre solo puede contener letras." }),        
+    name: string({ required_error: "Nombre de plan requerido" }).min(2, { message: "El nombre debe tener al menos 2 caracteres." }).regex(/^[a-zA-Z]+(\s[a-zA-Z]+)*$/, { message: "El nombre solo puede contener letras." }),
     price: coerce.number({ required_error: "Precio requerido" }).min(1, { message: "El precio debe ser mayor a 0." }),
     description: string().optional(),
     durationDaysPlan: coerce.number({ required_error: "Duracion del plan requerido" }).min(1, { message: "La duracion del plan debe ser mayor a 0." }).max(368, { message: "El precio no puede ser mayor a 1 año en dias 368." }),
@@ -62,4 +62,17 @@ export const UpdateUserSubscriptionSchema = object({
     startDate: string().refine((date) => !isNaN(Date.parse(date)), {
         message: "La fecha de inicio debe ser una fecha válida.",
     }),
+});
+
+export const productSchema = object({
+    nameProduct: string().min(3, { message: "El nombre debe tener al menos 3 caracteres." }).max(100),
+    descriptionProduct: string().min(10, { message: "La descripción debe tener al menos 10 caracteres." }).max(500).optional(),
+    priceProduct: coerce.number().positive({ message: "El precio debe ser un número positivo." }),
+    stockProduct: coerce.number().int().min(0, { message: "El stock no puede ser negativo." }),
+    categoryProduct: string().min(1, { message: "Debes seleccionar una categoría." }),
+});
+
+// Esquema de validación para el nombre de la categoría
+export const categorySchema = object({
+    nameCategory: string().min(2, { message: "El nombre de la categoría debe tener al menos 2 caracteres." }).max(50, { message: "El nombre no puede exceder los 50 caracteres." }),
 });
