@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ChevronLeft, ChevronRight, Edit, EyeIcon, Mail, Phone, Trash2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, Edit, EyeIcon, Mail, Phone, Trash2, UserSearch } from "lucide-react"
 import { getDataUserAction } from "@/actions/get-data-user-action"
 import { UserModel } from "../../Model/User-model"
 import checkSubscriptionExpiration from "@/actions/expiration-subscription-action"
@@ -34,6 +34,8 @@ import { Card, CardDescription, CardHeader, CardTitle } from "./card"
 export default function UserTable() {
 
     const ITEMS_PER_PAGE = 15; // Define cuántos usuarios mostrar por página
+    const [isLoading, setIsLoading] = useState(true);
+
     const [users, setUsers] = useState<UserModel[]>([])
     const [expireSubscription, setExpireSubscription] = useState<Record<string, string>>({});
     const [userStatusMap, setUserStatusMap] = useState<Record<string, string>>({});
@@ -41,6 +43,7 @@ export default function UserTable() {
 
     //* Obtener los datos de los usuarios al cargar el componente
     useEffect(() => {
+        setIsLoading(true); // Iniciar el estado de carga
         getDataUserAction().then((data) => {
             if (!data || data.length === 0) {
                 toast.error("Error", { description: "No se encontraron usuarios en la base de datos." });
@@ -49,6 +52,7 @@ export default function UserTable() {
             }
             setUsers(data)
             setCurrentPage(1); // Reiniciar a la primera página al cargar los datos
+            setIsLoading(false); // Finalizar el estado de carga
         });
     }, []);
     const { Canvas } = useQRCode();
@@ -208,6 +212,15 @@ export default function UserTable() {
         }
     }
 
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <UserSearch className="h-12 w-12 animate-pulse text-primary" />
+                <p className="ml-4 text-lg">Buscando Usuarios ...</p>
+            </div>
+        );
+    }
 
     //
     return (

@@ -31,7 +31,6 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-    AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,6 +54,8 @@ import { Category } from '@/Model/Category-model';
 import { productSchema } from '@/lib/zod';
 import { getDataProductsAllAction } from '@/actions/get-data-products-action';
 import { getAllCategoriesAction } from '@/actions/get-data-categories-action';
+import { editProductAction } from '@/actions/edit-products-actions';
+import { deleteProductsAction } from '@/actions/delete-products-action';
 
 const ITEMS_PER_PAGE = 10;
 export default function ManageProductsPage() {
@@ -67,7 +68,7 @@ export default function ManageProductsPage() {
 
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>();
 
     type productFormData = z.infer<typeof productSchema>; //* el esquema que tengo de validacion el zod
 
@@ -86,7 +87,6 @@ export default function ManageProductsPage() {
                 setProducts(productsData);
                 setCategories(categoriesData);
             } catch (error) {
-                console.log(error);
                 throw new Error("Error al cargar los productos o categorías");
             } finally {
                 setIsLoading(false);
@@ -112,8 +112,7 @@ export default function ManageProductsPage() {
             descriptionProduct: product.descriptionProduct || "",
             priceProduct: product.priceProduct,
             stockProduct: product.stockProduct,
-            categoryProduct: product.idCategoriProduct || "", // Asegúrate de que este campo coincida con el ID de la categoría
-            
+            categoryProduct: product.idCategoriProduct || "", // Asegurar de que este campo coincida con el ID de la categoría
         });
         setIsEditDialogOpen(true);
     };
@@ -127,35 +126,42 @@ export default function ManageProductsPage() {
         if (!selectedProduct) return;
         toast.info("Eliminando producto...");
         try {
-            console.log("Producto a eliminar:", selectedProduct);
-            // const result = await deleteProductAction(selectedProduct.id);
-            // if (result.success) {
-            //     setProducts(prev => prev.filter(p => p.id !== selectedProduct.id));
-            //     toast.success("Producto eliminado", { description: `"${selectedProduct.name}" ha sido eliminado.` });
-            //     setIsDeleteDialogOpen(false);
-            //     setSelectedProduct(null);
-            // } else {
-            //     toast.error("Error al eliminar", { description: result.message || "No se pudo eliminar el producto." });
-            // }
+            const result = await deleteProductsAction(selectedProduct.id);
+            if (result.success) {
+                setProducts(prev => prev.filter(p => p.id !== selectedProduct.id));
+                toast.success("Producto eliminado", { description: `"${selectedProduct.nameProduct}" ha sido eliminado.` });
+                setIsDeleteDialogOpen(false);
+                setSelectedProduct(null);
+            } else {
+                toast.error("Error al eliminar", { description: result.message || "No se pudo eliminar el producto." });
+            }
         } catch (error) {
             toast.error("Error inesperado", { description: "Ocurrió un problema al eliminar." });
         }
     };
 
     const onEditSubmit = async (data: productFormData) => {
+
         if (!selectedProduct) return;
         toast.info("Actualizando producto...");
         try {
-            // // const result = await updateProductAction(selectedProduct.id, data);
-            // if (result.success && result.data) {
-            //     setProducts(prev => prev.map(p => p.id === selectedProduct.id ? { ...p, ...result.data! } : p));
-            //     toast.success("Producto actualizado", { description: `"${result.data.name}" ha sido actualizado.` });
-            //     setIsEditDialogOpen(false);
-            //     setSelectedProduct(null);
-            // } else {
-            //     toast.error("Error al actualizar", { description: result.message || "No se pudo actualizar el producto." });
-            // }
-            console.log("Datos del producto a actualizar:", data);
+            const res = await editProductAction(selectedProduct.id, data);
+            if (res.success && res.data) {
+                setProducts(prev => prev.map(p =>
+                    p.id === selectedProduct.id
+                        ? {
+                            ...p,
+                            ...res.data,
+                            descriptionProduct: res.data.descriptionProduct ?? "" //* Asegurar que la descripcion no sea undefined
+                        }
+                        : p
+                ));
+                toast.success("Producto actualizado", { description: `"${res.data.nameProduct}" ha sido actualizado.` });
+                setIsEditDialogOpen(false);
+                setSelectedProduct(null);
+            } else {
+                toast.error("Error al actualizar", { description: res.message || "No se pudo actualizar el producto." });
+            }
         } catch (error) {
             toast.error("Error inesperado", { description: "Ocurrió un problema al actualizar." });
         }
@@ -180,7 +186,7 @@ export default function ManageProductsPage() {
                             <CardDescription>Visualiza, edita o elimina los productos de tu inventario.</CardDescription>
                         </div>
                         <Link href="/dashboard/products/create-product" passHref>
-                             <Button>
+                            <Button>
                                 <PlusCircle className="mr-2 h-4 w-4" />
                                 Añadir Producto
                             </Button>
@@ -201,7 +207,7 @@ export default function ManageProductsPage() {
                                     <TableHead>Categoría</TableHead>
                                     <TableHead className="text-right">Precio</TableHead>
                                     <TableHead className="text-right">Stock</TableHead>
-                                    <TableHead>Última Modificación</TableHead>
+                                    <TableHead className='text-center'>Última Modificación</TableHead>
                                     <TableHead className="text-center">Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -209,11 +215,28 @@ export default function ManageProductsPage() {
                                 {paginatedProducts.length > 0 ? (
                                     paginatedProducts.map((product) => (
                                         <TableRow key={product.id}>
-                                            <TableCell className="font-medium">{product.nameProduct}</TableCell>
-                                            <TableCell>{product.nameCategoryProduct || 'N/A'}</TableCell>
+                                            <TableCell className="font-medium">
+                                                <span>{product.nameProduct}</span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                                                    {product.nameCategoryProduct || 'N/A'}
+                                                </span>
+                                            </TableCell>
                                             <TableCell className="text-right">${product.priceProduct.toLocaleString('es-CL')}</TableCell>
-                                            <TableCell className="text-right">{product.stockProduct}</TableCell>
-                                            <TableCell>{new Date(product.updateAtProduct!).toLocaleDateString('es-CL')}</TableCell>
+                                            <TableCell className="text-right">
+                                                <span>
+                                                    {product.stockProduct >= 5 ?
+                                                        <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">{product.stockProduct}</span>
+                                                        : <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">{product.stockProduct}</span>}
+
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                    {new Date(product.updateAtProduct!).toLocaleDateString('es-CL')}
+                                                </span>
+                                            </TableCell>
                                             <TableCell className="text-center">
                                                 <div className="flex justify-center gap-2">
                                                     <Button variant="outline" size="icon" onClick={() => handleEdit(product)}>
@@ -299,20 +322,20 @@ export default function ManageProductsPage() {
                         </div>
                         <div>
                             <Label htmlFor="edit-category">Categoría</Label>
-                            {/* <Select
-                                onValueChange={(value) => setValue('idCategoriProduct', value, { shouldValidate: true })}
-                                defaultValue={selectedProduct?.idCategoriProduct}
+                            <Select
+                                onValueChange={(value) => setValue('categoryProduct', value, { shouldValidate: true })}
+                                defaultValue={selectedProduct ? selectedProduct.idCategoriProduct : ""} //* Asegurar que el valor por defecto sea el id de la categoria del producto seleccionado
                             >
-                                <SelectTrigger id="edit-category" className={errors.idCategoriProduct ? "border-red-500" : ""}>
+                                <SelectTrigger id="edit-category" className={errors.categoryProduct ? "border-red-500" : ""}>
                                     <SelectValue placeholder="Selecciona una categoría" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {categories.map(cat => (
-                                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                                        <SelectItem key={cat.id} value={cat.id}>{cat.nameCategory}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
-                            {errors.categoryId && <p className="text-red-500 text-sm mt-1">{errors.categoryId.message}</p>} */}
+                            {errors.categoryProduct && <p className="text-red-500 text-sm mt-1">{errors.categoryProduct.message}</p>}
                         </div>
                         <DialogFooter>
                             <DialogClose asChild>
@@ -330,7 +353,7 @@ export default function ManageProductsPage() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>¿Estás seguro de eliminar este producto?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Esta acción no se puede deshacer. Se eliminará permanentemente el producto {selectedProduct?.nameProduct} del inventario.
+                            Esta acción no se puede deshacer. Se eliminará permanentemente el producto ({selectedProduct?.nameProduct}) del inventario.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
