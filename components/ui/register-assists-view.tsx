@@ -19,9 +19,9 @@ import { registerAssistsQrAction } from '@/actions/register-assists-action';
 
 
 export default function RegisterAssistsView() {
+    //* logica de registro manual
     // const [selectedUserId, setSelectedUserId] = useState<string | undefined>();
     // const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-    //* gica de registro manual
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const handleManualRegister = () => {
         // if (!selectedUserId || !selectedDate) {

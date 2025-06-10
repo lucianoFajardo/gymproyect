@@ -166,7 +166,7 @@ export default function PlansTable() {
                                     <TableCell className="max-w-xs truncate">{plan.description ? plan.description : "N/A"}</TableCell>
                                     <TableCell className="text-center">
                                         <div className="flex justify-end gap-2 ">
-                                            <Button className='cursor-pointer' variant="ghost" size="icon" onClick={() => handleEditPlans(plan)}>
+                                            <Button className='cursor-pointer' variant="outline" size="icon" onClick={() => handleEditPlans(plan)}>
                                                 <Edit className="h-4 w-4 " />
                                                 <span className="sr-only">Editar</span>
                                             </Button>
@@ -179,7 +179,7 @@ export default function PlansTable() {
                                                 <AlertDialogTrigger asChild>
                                                     <Button
                                                         className="cursor-pointer"
-                                                        variant="ghost"
+                                                        variant="destructive"
                                                         size="icon"
                                                         onClick={() => {
                                                             setPlanToDeleteId(plan.id ? plan.id : "");

@@ -64,23 +64,21 @@ export default function UserSubscriptionManagerTable() {
         fetchData();
     }, []);
 
-    //* Lógica de paginación
+    //* Lógica de paginación */
     const totalPages = Math.ceil((dataUserSubscription?.length ?? 0) / ITEMS_PER_PAGE);
-
     const paginatedSubs = useMemo(() => {
         const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
         const endIndex = startIndex + ITEMS_PER_PAGE;
         return (dataUserSubscription ?? []).slice(startIndex, endIndex);
     }, [dataUserSubscription, currentPage]);
-
     const handleNextPage = () => {
         setCurrentPage((prev) => Math.min(prev + 1, totalPages));
     };
-
     const handlePreviousPage = () => {
         setCurrentPage((prev) => Math.max(prev - 1, 1));
     };
-
+    //************************************************ */
+    
     useEffect(() => {
         if (dataUserSubscription && dataUserSubscription.length > 0) {
             Promise.all(

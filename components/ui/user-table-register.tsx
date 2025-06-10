@@ -307,15 +307,14 @@ export default function UserTable() {
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
                                             {/* Aqui mostrar informacion mas detallada del usuario */}
-                                            <Button variant="ghost" size="icon" onClick={() => handleViewDetails(user)}>
+                                            <Button variant="outline" size="icon" onClick={() => handleViewDetails(user)}>
                                                 <EyeIcon className="h-4 w-4" />
                                                 <span className="sr-only">Ver</span>
                                             </Button>
-                                            <Button variant="ghost" size="icon" onClick={() => handleEdit(user)}>
+                                            <Button variant="outline" size="icon" onClick={() => handleEdit(user)}>
                                                 <Edit className="h-4 w-4" />
                                                 <span className="sr-only">Editar</span>
                                             </Button>
-
                                             <AlertDialog open={isDeleteDialogOpen && userToDeleteId === user.id} onOpenChange={(open) => {
                                                 if (!open) {
                                                     setIsDeleteDialogOpen(false);
@@ -324,7 +323,7 @@ export default function UserTable() {
                                             }}>
                                                 <AlertDialogTrigger asChild>
                                                     <Button
-                                                        variant="ghost"
+                                                        variant="destructive"
                                                         size="icon"
                                                         onClick={() => {
                                                             setUserToDeleteId(user.id);

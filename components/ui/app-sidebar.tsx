@@ -133,7 +133,7 @@ const data = {
         },
         {
           title: "Gestionar productos",
-          url: "/dashboard/manage-subscriptions",
+          url: "/dashboard/products/manage-products",
         },
         {
           title: "Generar reportes",
