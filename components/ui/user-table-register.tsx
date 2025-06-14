@@ -15,6 +15,7 @@ import { toast } from "sonner"
 import { updateUserAction } from "@/actions/update-data-user-action"
 import { UpdateClientSchema } from "@/lib/zod"
 import { z } from "zod"
+
 import {
     AlertDialog,
     AlertDialogAction,
@@ -238,7 +239,6 @@ export default function UserTable() {
                     <TableCaption>Lista de usuarios disponibles.</TableCaption>
                     <TableHeader>
                         <TableRow>
-
                             <TableHead>Nombre</TableHead>
                             <TableHead>Apellido</TableHead>
                             <TableHead>Teléfono</TableHead>

@@ -125,11 +125,11 @@ const data = {
         },
         {
           title: "Crear servicios",
-          url: "/dashboard/services/#",
+          url: "/dashboard/services/create-services",
         },
         {
           title: "Gestionar servicios",
-          url: "/dashboard/manage-plans",
+          url: "/dashboard/services/manage-services",
         },
         {
           title: "Gestionar productos",

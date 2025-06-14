@@ -58,12 +58,12 @@ export async function getDataUserAction(): Promise<UserModel[]> {
 
         // No necesitas la verificación de !parsedUsers, findMany devuelve [] si no hay resultados
         if (formattedUsers.length === 0) {
-            console.log("No se encontraron usuarios registrados.");
+            return[];
         }
 
         return formattedUsers;
-    } catch (error) {
-        console.error("Error al obtener los usuarios:", error);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_) {
         return [];
     }
 }
@@ -112,12 +112,12 @@ export async function getDataUserActionWithSubscription() {
 
         // No necesitas la verificación de !parsedUsers, findMany devuelve [] si no hay resultados
         if (formattedUsers.length === 0) {
-            console.log("No se encontraron usuarios registrados.");
+            return [];
         }
 
         return formattedUsers;
-    } catch (error) {
-        console.error("Error al obtener los usuarios:", error);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_) {
         return [];
     }
 }

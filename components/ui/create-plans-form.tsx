@@ -105,7 +105,7 @@ export default function CreatePlansForm() {
                                 </FormItem>
                             )}
                         />
-                        <Button type="submit" >Crear Plan</Button>
+                        <Button type="submit">Crear Plan</Button>
                     </form>
                 </Form>
             </div>

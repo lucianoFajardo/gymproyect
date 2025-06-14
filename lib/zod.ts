@@ -1,4 +1,4 @@
-import { coerce, object, string } from "zod"
+import { coerce, object, string, date, enum as zodEnum } from "zod"
 
 export const LoginSchema = object({
     email: string({ required_error: "Correo es requerido" })
@@ -75,4 +75,33 @@ export const productSchema = object({
 // Esquema de validación para el nombre de la categoría
 export const categorySchema = object({
     nameCategory: string().min(2, { message: "El nombre de la categoría debe tener al menos 2 caracteres." }).max(50, { message: "El nombre no puede exceder los 50 caracteres." }),
+});
+
+export const serviceSchema = object({
+    serviceName: string().min(2, {
+        message: "El nombre del servicio debe tener al menos 2 caracteres.",
+    }).max(100, { message: "El nombre del servicio no puede exceder los 100 caracteres." }),
+    serviceCost: coerce.number().positive({
+        message: "El costo del servicio debe ser un número positivo.",
+    }),
+    dueDate: date({
+        required_error: "La próxima fecha de vencimiento es obligatoria.",
+        invalid_type_error: "La próxima fecha de vencimiento debe ser una fecha válida.",
+    }),
+    paymentFrequency: string().min(1, { message: "El tipo de pago es requerido"}).max(100),
+    fixedExpense: zodEnum(["FIJO", "BASICO", "VARIABLE"], { // Añadido "VARIABLE"
+        required_error: "El tipo de gasto es obligatorio.",
+    }),
+    providerName: string().min(2, { message: "El nombre del proveedor debe tener al menos 2 caracteres." }).max(100).optional(),
+    contactPerson: string().min(2, { message: "El nombre de la persona de contacto debe tener al menos 2 caracteres." }).max(100).optional(),
+    providerPhoneNumber: string()
+        .regex(/^\+?\d{7,15}$/, { message: "Número de teléfono del proveedor no válido." }) // Regex simple para teléfono internacional
+        .optional(),
+    category: string().min(2, { message: "La categoría debe tener al menos 2 caracteres." }).max(50).optional(),
+    status: zodEnum(["ACTIVO", "INACTIVO", "PENDIENTE", "PAGADO"], { // Opciones de estado
+        required_error: "El estado es obligatorio.",
+    }),
+
+    paymentMethod: string().min(2, { message: "El método de pago debe tener al menos 2 caracteres." }).max(50).optional(),
+    notes: string().max(500, { message: "Las notas no pueden exceder los 500 caracteres." }).optional(),
 });

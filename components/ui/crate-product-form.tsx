@@ -30,7 +30,7 @@ export default function CreateProductForm() {
     useEffect(() => {
         getAllCategoriesAction().then(data => setProductCategories(data))
     }
-        , [])
+    , [])
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [productCategories, setProductCategories] = useState<Category[]>([])

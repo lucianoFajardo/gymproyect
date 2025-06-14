@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
-
+//TODO: Mover a un componente separado
 import React, { useState, useEffect, useMemo } from 'react';
 import {
     Table,
@@ -19,7 +19,6 @@ import {
     DialogTitle,
     DialogDescription,
     DialogFooter,
-    DialogTrigger,
     DialogClose,
 } from "@/components/ui/dialog";
 import {
@@ -141,7 +140,6 @@ export default function ManageProductsPage() {
     };
 
     const onEditSubmit = async (data: productFormData) => {
-
         if (!selectedProduct) return;
         toast.info("Actualizando producto...");
         try {
@@ -205,7 +203,7 @@ export default function ManageProductsPage() {
                                 <TableRow>
                                     <TableHead className="w-[250px]">Nombre</TableHead>
                                     <TableHead>Categoría</TableHead>
-                                    <TableHead className="text-right">Precio</TableHead>
+                                    <TableHead className="text-right">Precio unitario</TableHead>
                                     <TableHead className="text-right">Stock</TableHead>
                                     <TableHead className='text-center'>Última Modificación</TableHead>
                                     <TableHead className="text-center">Acciones</TableHead>
@@ -299,29 +297,29 @@ export default function ManageProductsPage() {
                     </DialogHeader>
                     <form onSubmit={handleSubmit(onEditSubmit)} className="grid gap-4 py-4">
                         <div>
-                            <Label htmlFor="edit-name">Nombre del Producto</Label>
+                            <Label htmlFor="edit-name" className='pb-2'>Nombre del Producto</Label>
                             <Input id="edit-name" {...register("nameProduct")} className={errors.nameProduct ? "border-red-500" : ""} />
                             {errors.nameProduct && <p className="text-red-500 text-sm mt-1">{errors.nameProduct.message}</p>}
                         </div>
                         <div>
-                            <Label htmlFor="edit-description">Descripción</Label>
+                            <Label htmlFor="edit-description" className='pb-2'>Descripción</Label>
                             <Textarea id="edit-description" {...register("descriptionProduct")} className={errors.descriptionProduct ? "border-red-500" : ""} />
                             {errors.descriptionProduct && <p className="text-red-500 text-sm mt-1">{errors.descriptionProduct.message}</p>}
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <Label htmlFor="edit-price">Precio</Label>
+                                <Label htmlFor="edit-price" className='pb-2'>Precio Unitario</Label>
                                 <Input id="edit-price" type="number" {...register("priceProduct")} step="0.01" className={errors.priceProduct ? "border-red-500" : ""} />
                                 {errors.priceProduct && <p className="text-red-500 text-sm mt-1">{errors.priceProduct.message}</p>}
                             </div>
                             <div>
-                                <Label htmlFor="edit-stock">Stock</Label>
+                                <Label htmlFor="edit-stock" className='pb-2'>Stock</Label>
                                 <Input id="edit-stock" type="number" {...register("stockProduct")} className={errors.stockProduct ? "border-red-500" : ""} />
                                 {errors.stockProduct && <p className="text-red-500 text-sm mt-1">{errors.stockProduct.message}</p>}
                             </div>
                         </div>
                         <div>
-                            <Label htmlFor="edit-category">Categoría</Label>
+                            <Label htmlFor="edit-category" className='pb-2'>Categoría</Label>
                             <Select
                                 onValueChange={(value) => setValue('categoryProduct', value, { shouldValidate: true })}
                                 defaultValue={selectedProduct ? selectedProduct.idCategoriProduct : ""} //* Asegurar que el valor por defecto sea el id de la categoria del producto seleccionado

@@ -2,7 +2,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import {
     Form,
@@ -20,6 +19,8 @@ import {
     CommandItem,
     CommandList,
 } from "@/components/ui/command"
+import { format } from "date-fns";
+import { es } from 'date-fns/locale'; // Importar el locale en español
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
@@ -231,7 +232,7 @@ export default function ProfileForm() {
                                                     className="w-full justify-start text-left font-normal"
                                                 >
                                                     {field.value
-                                                        ? format(new Date(field.value), "P")
+                                                        ? format(field.value, "PPP" , {locale: es})
                                                         : "Selecciona una fecha"}
                                                 </Button>
                                             </PopoverTrigger>

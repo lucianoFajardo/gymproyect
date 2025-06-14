@@ -106,6 +106,7 @@ model Assists {
   date      DateTime          @default(now())
   createdAt DateTime          @default(now())
   client    CreateClientModel @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
   @@index([clientId])
 }
 
@@ -127,4 +128,41 @@ model Category {
   createAt     DateTime  @default(now())
   updateAt     DateTime  @updatedAt
   products     Product[]
+}
+
+model Service {
+  id                  String           @id @default(cuid())
+  serviceName         String
+  serviceCost         Int
+  dueDate             DateTime         @default(now())
+  paymentFrequency    String
+  fixedExpense        String
+  providerName        String
+  contactPerson       String
+  providerPhoneNumber String
+  status              String
+  paymentMethod       String?
+  notes               String?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  ServicePayment      ServicePayment[]
+}
+
+// Nuevo modelo ServicePayment
+model ServicePayment {
+  id                    String   @id @default(cuid())
+  paymentDate           DateTime
+  amountPaid            Int
+  dueDateCovered        DateTime
+  nextDueDateCalculated DateTime
+  paymentMethodUsed     String?
+  serviceId             String
+  service               Service  @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  // onDelete: Cascade significa que si se borra un Servicio, se borran todos sus pagos asociados.
+  // Restrict si no se pueda borrar un servicio si tiene pagos.
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([serviceId])
+  @@index([paymentDate])
 }
