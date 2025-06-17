@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, JSX, useEffect } from "react"; // Añadido useEffect
+import { useState, JSX, useEffect,} from "react"; // Añadido useEffect
 import {
     Table,
     TableBody,
@@ -11,14 +11,20 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, AlertTriangle, CalendarClock, History, EyeIcon } from "lucide-react"; // Añadido History icon
-import { format, differenceInDays, isPast, isToday } from 'date-fns';
+import { CheckCircle, AlertTriangle, CalendarClock, History, EyeIcon, } from "lucide-react"; // Añadido History icon
+import { format, differenceInDays, isPast, isToday, addMonths, addDays, addYears } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ServicePaymentHistoryModal, PaymentHistoryEntry } from "./service-payment-history"; // Importar el modal
+import { ServicePaymentHistoryModal} from "./service-payment-history"; // Importar el modal
 import { Card, CardDescription, CardHeader, CardTitle } from "./card";
 import { ServicesModel } from "@/Model/Services-model";
 import { getAllDataServiceAction } from "@/actions/get-data-services-action";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./dialog";
+import { Separator } from "@radix-ui/react-separator";
+import { createPaymentServiceAction } from "@/actions/create-payment-services-action";
+import { toast } from "sonner";
+import { updateServicesPaymentAction } from "@/actions/update-services-action";
+import { PaymentServiceHistoryModel } from "@/Model/Paymet-Service-model";
+import { getPaymentServicesAction } from "@/actions/get-data-service-payment-action";
 
 //* Helper o funcion, para obtener el estado del vencimiento
 const getDueDateStatus = (dueDate: Date, serviceStatus: ServicesModel["status"]): { text: string; variant: "default" | "destructive" | "secondary" | "outline"; icon?: JSX.Element } => {
@@ -38,20 +44,19 @@ const getDueDateStatus = (dueDate: Date, serviceStatus: ServicesModel["status"])
     }
     return { text: "Activo", variant: "secondary" };
 };
-// Datos de ejemplo para el historial de pagos (simulación)
-const examplePaymentHistory: { [serviceId: string]: PaymentHistoryEntry[] } = {
-    "SERV-001": [
-        { paymentId: "PAY-001A", paymentDate: new Date(2025, 4, 10), amountPaid: 150.75, dueDateCovered: new Date(2025, 4, 15), notes: "Pago mes de Mayo" },
-        { paymentId: "PAY-001B", paymentDate: new Date(2025, 3, 12), amountPaid: 150.75, dueDateCovered: new Date(2025, 3, 15) },
-    ],
-    "SERV-003": [
-        { paymentId: "PAY-003A", paymentDate: new Date(new Date().setDate(new Date().getDate() - 28)), amountPaid: 250, dueDateCovered: new Date(new Date().setDate(new Date().getDate() + 2)) },
-    ]
-};
+
+
 export function ServiceListTable() {
     useEffect(() => {
         getAllDataServiceAction().then(data => setServices(data))
-    }, [])
+    }, []);
+
+    useEffect(() => {
+        //TODO : Seguir aqui , llamo a todos los pagos de servicios, para que se carguen al inicio de la aplicacion , despues filtrarlos por el servicio que se nececita
+        getPaymentServicesAction().then(history => {
+            console.log("Historial de pagos:", history.length);
+        });
+     }, []);
 
     const [services, setServices] = useState<ServicesModel[]>();
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
@@ -59,32 +64,68 @@ export function ServiceListTable() {
     const [selectedService, setSelectedService] = useState<ServicesModel | null>(null);
 
     const [selectedServiceForHistory, setSelectedServiceForHistory] = useState<ServicesModel | null>(null);
-    const [currentHistoryData, setCurrentHistoryData] = useState<PaymentHistoryEntry[]>([]);
+    const [currentHistoryData, setCurrentHistoryData] = useState<PaymentServiceHistoryModel[]>();
 
     //*** Para crear y a la vez guardar este pago, el cual se almacenara en la base de datos, con un boton tengo que entregarle la info*/
-    // const handleMarkAsPaid = (serviceId: string) => {
-    //     setServices(prevServices =>
-    //         prevServices.map(service => {
-    //             if (service.serviceId === serviceId) {
-    //                 let newDueDate = new Date(service.dueDate);
-    //                 switch (service.paymentFrequency) {
-    //                     case "MENSUAL": newDueDate = addMonths(service.dueDate, 1); break;
-    //                     // ... (otros casos de frecuencia)
-    //                 }
-
-    //                 console.log(`Servicio ${serviceId} marcado como pagado. Nueva fecha de vencimiento: ${newDueDate}`);
-    //                 return { ...service, status: "PAGADO", dueDate: newDueDate, lastPaymentDate: new Date() };
-    //             }
-    //             return service;
-    //         })
-    //     );
-    // };
-
-    const handleEditService = (serviceId: string) => {
-        console.log(`Editar servicio ${serviceId}`);
-        // Aquí podrías redirigir a una página de edición o abrir un modal de edición
-        // Por ahora, solo mostramos un mensaje en la consola
+    const handleMarkAsPaid = async (serviceId: string) => {
+        const serviceToUpdate = services!.find(s => s.id === serviceId);
+        if (!serviceToUpdate) {
+            toast.error("Servicio no encontrado.");
+            return;
+        }
+        let newDueDate = new Date(serviceToUpdate.dueDate);
+        switch (serviceToUpdate.paymentFrequency) {
+            case "7": newDueDate = addDays(new Date(serviceToUpdate.dueDate), 7); break;
+            case "30": newDueDate = addMonths(new Date(serviceToUpdate.dueDate), 1); break;
+            case "90": newDueDate = addMonths(new Date(serviceToUpdate.dueDate), 3); break;
+            case "360": newDueDate = addYears(new Date(serviceToUpdate.dueDate), 1); break;
+            default:
+                toast.warning("Frecuencia de pago no válida, por favor revisa la configuración del servicio.");
+                break;
+        }
+        try {
+            const response = await createPaymentServiceAction(serviceToUpdate);
+            //* Primero registro el pago del servicio 
+            if (response.success) {
+                toast.success("Pago registrado exitosamente");
+                //* Creo el payload para actualizar el servicio
+                const servicePayload = {
+                    status: "PAGADO",
+                    dueDate: newDueDate,
+                };
+                //* Llamo a la funcion para actualizar el servicio con el nuevo estado y fecha de pago.
+                const updateResponse = await updateServicesPaymentAction(serviceId, servicePayload);
+                if (updateResponse.success) {
+                    toast.success("Servicio actualizado exitosamente");
+                    //* Actualizar el estado local de los servicios
+                    setServices(prevServices =>
+                        prevServices!.map(service =>
+                            service.id === serviceId
+                                ? {
+                                    ...service,
+                                    status: "PAGADO",
+                                    dueDate: newDueDate,
+                                    lastPaymentDate: new Date(),
+                                }
+                                : service
+                        )
+                    );
+                } else {
+                    toast.error(updateResponse.message || "Error al actualizar el servicio.");
+                }
+            } else {
+                toast.error(response.message || "Error al registrar el pago del servicio.");
+            }
+        } catch (error) {
+            throw new Error("Error en el servidor al tratar de registrar el pago." + error);
+        }
     };
+
+    // const handleEditService = (serviceId: string) => {
+    //     console.log(`Editar servicio ${serviceId}`);
+    //     // Aquí podrías redirigir a una página de edición o abrir un modal de edición
+    //     // Por ahora, solo mostramos un mensaje en la consola
+    // };
 
     const handleViewDetails = (service: ServicesModel) => {
         setSelectedService(service);
@@ -94,8 +135,7 @@ export function ServiceListTable() {
     const handleViewHistory = (service: ServicesModel) => {
         setSelectedServiceForHistory(service);
         // En una aplicación real, aquí harías fetch del historial para este service.serviceId
-        // Por ahora, usamos los datos de ejemplo:
-        setCurrentHistoryData(examplePaymentHistory[service.id] || []);
+        // Aqui tengo que tener el get de los pagos de este servicio;
         setIsHistoryModalOpen(true);
     };
 
@@ -137,7 +177,7 @@ export function ServiceListTable() {
                                         <TableCell className="font-medium">{service.serviceName}</TableCell>
                                         <TableCell className="">
                                             <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full  bg-purple-100 text-purple-800">
-                                                ${service.serviceCost}
+                                                ${service.serviceCost.toLocaleString()}
                                             </span>
                                         </TableCell>
                                         <TableCell>
@@ -171,13 +211,14 @@ export function ServiceListTable() {
                                                     <EyeIcon className="h-4 w-4" />
                                                     <span className="sr-only">Ver</span>
                                                 </Button>
-                                                <Button variant="outline" size="icon" onClick={() => "activar plan"}>
-                                                    <CheckCircle className="h-4 w-4" />
-                                                    <span className="sr-only">Activar Plan</span>
-                                                </Button>
-                                                <Button variant="default" size="icon" onClick={() => "historial de pagos"}>
+                                                <Button variant="default" size="icon" onClick={() => handleViewHistory(service)}>
                                                     <History className="h-4 w-4" />
                                                     <span className="sr-only">Ver pagos</span>
+                                                </Button>
+                                                <Separator orientation="vertical">|</Separator>
+                                                <Button variant="outline" size="icon" onClick={() => handleMarkAsPaid(service.id)}>
+                                                    <CheckCircle className="h-4 w-4" />
+                                                    <span className="sr-only">Activar Plan</span>
                                                 </Button>
                                             </div>
                                         </TableCell>
@@ -195,7 +236,7 @@ export function ServiceListTable() {
                     isOpen={isHistoryModalOpen}
                     onOpenChange={setIsHistoryModalOpen}
                     serviceName={selectedServiceForHistory.serviceName}
-                    historyData={currentHistoryData}
+                    historyData={currentHistoryData || []}
                 />
             )}
 
@@ -273,7 +314,7 @@ export function ServiceListTable() {
                 </Dialog>
             )}
 
-            
+
         </Card>
     );
 }

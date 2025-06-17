@@ -50,10 +50,10 @@ export function CreateServiceForm() {
             label: 7,
         }, {
             value: "Mensual",
-            label: 60,
+            label: 30,
         }, {
             value: "Trimestral",
-            label: 120,
+            label: 90,
         }, {
             value: "Anual",
             label: 360,

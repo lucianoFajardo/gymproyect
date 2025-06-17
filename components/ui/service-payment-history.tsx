@@ -21,6 +21,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"; // Para historiales la
 import { Button } from "@/components/ui/button"; // Si necesitas un botón de cierre
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { PaymentServiceHistoryModel } from "@/Model/Paymet-Service-model";
 
 export interface PaymentHistoryEntry {
     paymentId: string;
@@ -34,7 +35,7 @@ interface ServicePaymentHistoryModalProps {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
     serviceName: string;
-    historyData: PaymentHistoryEntry[];
+    historyData: PaymentServiceHistoryModel[];
 }
 
 export function ServicePaymentHistoryModal({
@@ -70,12 +71,11 @@ export function ServicePaymentHistoryModal({
                             </TableHeader>
                             <TableBody>
                                 {historyData.map((payment) => (
-                                    <TableRow key={payment.paymentId}>
-                                        <TableCell>{format(payment.paymentDate, "PPP", { locale: es })}</TableCell>
-                                        <TableCell className="text-right">${payment.amountPaid.toFixed(2)}</TableCell>
-                                        <TableCell>{format(payment.dueDateCovered, "PPP", { locale: es })}</TableCell>
+                                    <TableRow key={payment.id}>
+                                        <TableCell>{format(payment.paymentServiceDate, "PPP", { locale: es })}</TableCell>
+                                        <TableCell className="text-right">${payment.paymentServiceAmount}</TableCell>
                                         <TableCell className="text-sm text-muted-foreground">
-                                            {payment.notes || "-"}
+                                            Datos
                                         </TableCell>
                                     </TableRow>
                                 ))}

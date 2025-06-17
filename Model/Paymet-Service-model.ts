@@ -3,5 +3,4 @@ export interface PaymentServiceHistoryModel {
     paymentServiceName: string;
     paymentServiceAmount: string;
     paymentServiceDate: string;
-    paymentServiceNote: string;
 }
