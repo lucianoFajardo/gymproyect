@@ -10,6 +10,7 @@ export const getPaymentServicesAction = async () : Promise<PaymentServiceHistory
                 id: true,
                 paymentDate: true,
                 amountPaid: true,
+                serviceId: true,
                 service: {
                     select: {
                         serviceName: true,
@@ -24,6 +25,7 @@ export const getPaymentServicesAction = async () : Promise<PaymentServiceHistory
                 paymentServiceName: services.service.serviceName ,
                 paymentServiceAmount: services.amountPaid.toString(),
                 paymentServiceDate: services.paymentDate.toISOString(),
+                serviceId: services.serviceId
             }
         })
         return paymentServicesParsed;

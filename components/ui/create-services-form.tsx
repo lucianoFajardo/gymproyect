@@ -30,15 +30,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { es } from 'date-fns/locale';
-import { CalendarIcon } from "lucide-react";
+import { BookAudio, CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./card";
-// Asegúrate de importar el schema correcto que incluye todos los campos
 import { serviceSchema } from "@/lib/zod";
 import { createServiceAction } from "@/actions/create-service-action";
+import { useState } from "react";
 
 export function CreateServiceForm() {
-
+    const [isLoading, setIsLoading] = useState(true);
     interface TypePaymentFrequency {
         value: string;
         label: number;
@@ -66,11 +66,11 @@ export function CreateServiceForm() {
             serviceCost: 0,
             dueDate: new Date(),
             paymentFrequency: "",
-            fixedExpense: "FIJO", // O "VARIABLE" o "BASICO" según tu enum
+            fixedExpense: "FIJO",
             providerName: "",
             contactPerson: "",
             providerPhoneNumber: "",
-            status: "ACTIVO", // Valor por defecto para el estado
+            status: "ACTIVO",
             paymentMethod: "",
             notes: "",
         },
@@ -88,7 +88,19 @@ export function CreateServiceForm() {
                 description: `Servicio: ${data.serviceName}, Costo: $${data.serviceCost}`,
             });
         }
-        form.reset(); // Resetea el formulario después del envío
+        form.reset();
+    }
+    setTimeout(() => {
+        setIsLoading(false);
+    }, 1000);
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <BookAudio className="h-12 w-12 animate-pulse text-primary" />
+                <p className="ml-4 text-lg">Crear servicios ...</p>
+            </div>
+        );
     }
 
     return (
@@ -239,7 +251,6 @@ export function CreateServiceForm() {
                                 </FormItem>
                             )}
                         />
-
 
                         <FormField
                             control={form.control}

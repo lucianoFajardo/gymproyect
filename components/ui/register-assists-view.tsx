@@ -1,7 +1,6 @@
 "use client";
 
 import React from 'react';
-// import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // import { Label } from "@/components/ui/label";
@@ -10,13 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // import { Calendar } from "@/components/ui/calendar";
 import { Scanner } from '@yudiel/react-qr-scanner';
 import type { IDetectedBarcode } from '@yudiel/react-qr-scanner';
-import { CalendarIcon as CalendarLucideIcon, QrCodeIcon } from 'lucide-react'; // Renombrado User a UserIcon para evitar conflicto
+import { CalendarIcon as CalendarLucideIcon, QrCodeIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { registerAssistsQrAction } from '@/actions/register-assists-action';
-
-
-// Mock data - Reemplazar con datos reales del backend
-
 
 export default function RegisterAssistsView() {
     //* logica de registro manual
@@ -83,9 +78,7 @@ export default function RegisterAssistsView() {
                             <CalendarLucideIcon className="mr-2 h-5 w-5" /> Registro Manual
                         </TabsTrigger>
                     </TabsList>
-
                     <TabsContent value="qr">
-                        {/* Aqui va el scaneo con el codigo qr */}
                         <Scanner onScan={(result) =>  handleQrRegister(result) } />
                     </TabsContent>
                     <TabsContent value='manual'>

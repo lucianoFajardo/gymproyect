@@ -21,19 +21,20 @@ import { productSchema } from '@/lib/zod';
 import { createProductAction } from '@/actions/create-product-action';
 import { getAllCategoriesAction } from '@/actions/get-data-categories-action';
 import { Category } from '@/Model/Category-model';
-
-// import { createProductAction } from '@/actions/product-actions'; // Suponiendo que tienes una server action
+import { ShoppingBasket } from 'lucide-react';
 
 type ProductFormData = z.infer<typeof productSchema>;
 
 export default function CreateProductForm() {
     useEffect(() => {
         getAllCategoriesAction().then(data => setProductCategories(data))
+        setIsLoading(false);
     }
-    , [])
+        , [])
 
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [productCategories, setProductCategories] = useState<Category[]>([])
+    const [productCategories, setProductCategories] = useState<Category[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm<ProductFormData>({
         resolver: zodResolver(productSchema),
         defaultValues: {
@@ -59,6 +60,15 @@ export default function CreateProductForm() {
             setIsSubmitting(false);
         }, 1500);
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <ShoppingBasket className="h-12 w-12 animate-pulse text-primary" />
+                <p className="ml-4 text-lg">Crear productos ...</p>
+            </div>
+        );
+    }
 
     return (
         <Card className="w-full max-w-2xl mx-auto my-8 shadow-lg">

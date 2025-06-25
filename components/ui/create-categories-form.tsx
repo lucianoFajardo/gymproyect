@@ -11,32 +11,34 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { toast } from 'sonner';
 import { categorySchema } from '@/lib/zod';
 import { createCategoryAction } from '@/actions/create-categorie-action';
-// Suponiendo que tienes una acción específica para crear categorías
-
+import { SquarePen } from 'lucide-react';
 
 type CategoryFormData = z.infer<typeof categorySchema>;
 
 export default function CreateCategoriesForm() {
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const { register, handleSubmit, formState: { errors }, reset } = useForm<CategoryFormData>({
         resolver: zodResolver(categorySchema),
         defaultValues: {
             nameCategory: "",
         }
     });
+    
+    setTimeout(() => {
+        setIsLoading(false);
+    }, 1000);
 
     const onSubmit = async (data: CategoryFormData) => {
         setIsSubmitting(true);
         toast.info("Creando categoría...", { description: "Por favor espera." });
-
         try {
             const result = await createCategoryAction(data);
             if (result.success) {
                 toast.success("Categoría Creada", {
                     description: `La categoría "${data.nameCategory}" ha sido creada exitosamente.`,
                 });
-                reset(); // Limpia el formulario
-            } else {
+                reset(); 
                 toast.error("Error al Crear Categoría", {
                     description: result.message || "No se pudo crear la categoría. Inténtalo de nuevo.",
                 });
@@ -51,8 +53,17 @@ export default function CreateCategoriesForm() {
         }
     };
 
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <SquarePen className="h-12 w-12 animate-pulse text-primary" />
+                <p className="ml-4 text-lg">Crear categorias ...</p>
+            </div>
+        );
+    }
+
     return (
-        <Card className="w-full max-w-md mx-auto my-8 shadow-lg"> {/* Ajustado max-w para un form más simple */}
+        <Card className="w-full max-w-md mx-auto my-8 shadow-lg">
             <CardHeader>
                 <CardTitle className="text-2xl font-bold">Crear Nueva Categoría</CardTitle>
                 <CardDescription>Ingresa el nombre para la nueva categoría de productos.</CardDescription>

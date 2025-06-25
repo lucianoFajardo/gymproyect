@@ -155,7 +155,7 @@ model ServicePayment {
   amountPaid        Int
   paymentMethodUsed String?
   serviceId         String
-  service           Service  @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  service           Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
   // onDelete: Cascade significa que si se borra un Servicio, se borran todos sus pagos asociados.
   // Restrict si no se pueda borrar un servicio si tiene pagos.
   createdAt         DateTime @default(now())

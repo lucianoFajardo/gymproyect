@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 
-"use client"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -30,7 +29,7 @@ export default function CreatePlansForm() {
     })
     const onSubmit = async (value: z.infer<typeof PlansSchema>) => {
         try {
-            //Aqui va el POST para crear el plan
+            toast.info("Creando plan de suscripción...", { description: "Por favor espera." });
             const res = await createSubscriptionPlanAction(value);
             if (res.error) {
                 toast.error("Error al crear el plan de subscripcion");

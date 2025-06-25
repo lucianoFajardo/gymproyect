@@ -3,4 +3,5 @@ export interface PaymentServiceHistoryModel {
     paymentServiceName: string;
     paymentServiceAmount: string;
     paymentServiceDate: string;
+    serviceId: string;
 }

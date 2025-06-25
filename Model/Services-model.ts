@@ -14,14 +14,14 @@ export interface ServicesModel {
     notes?: string,
 }
 
-// Modelo para mostrar en la lista de servicios
-export interface ServicesListModel {
-    serviceId: string;
+// Modelo para Editar un servicio
+export interface ServicesModelEdit {
     serviceName: string;
     serviceCost: number;
     dueDate: Date;
     paymentFrequency: string;
-    status: string;
-    lastPaymentDate?: Date | null;
-    notes?: string;
+    providerName: string;
+    contactPerson: string;
+    paymentMethod?: string;
+    providerPhoneNumber?: string;
 }

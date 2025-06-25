@@ -88,7 +88,7 @@ export const serviceSchema = object({
         required_error: "La próxima fecha de vencimiento es obligatoria.",
         invalid_type_error: "La próxima fecha de vencimiento debe ser una fecha válida.",
     }),
-    paymentFrequency: string().min(1, { message: "El tipo de pago es requerido"}).max(100),
+    paymentFrequency: string().min(1, { message: "El tipo de pago es requerido" }).max(100),
     fixedExpense: zodEnum(["FIJO", "BASICO", "VARIABLE"], { // Añadido "VARIABLE"
         required_error: "El tipo de gasto es obligatorio.",
     }),
@@ -104,4 +104,23 @@ export const serviceSchema = object({
 
     paymentMethod: string().min(2, { message: "El método de pago debe tener al menos 2 caracteres." }).max(50).optional(),
     notes: string().max(500, { message: "Las notas no pueden exceder los 500 caracteres." }).optional(),
+});
+
+export const serviceUpdateSchema = object({
+    serviceName: string().min(2, { message: "El nombre debe tener al menos 2 caracteres." }),
+    serviceCost: coerce.number().positive({ message: "El costo debe ser un número positivo." }),
+    dueDate: date({
+        required_error: "La próxima fecha de vencimiento es obligatoria.",
+        invalid_type_error: "La próxima fecha de vencimiento debe ser una fecha válida.",
+    }),
+    paymentFrequency: string({ required_error: "La frecuencia de pago es requerida." }),
+    providerName: string().min(2, { message: "El nombre del proveedor debe tener al menos 2 caracteres." }).max(100).optional(),
+    contactPerson: string().min(2, { message: "El nombre de la persona de contacto debe tener al menos 2 caracteres." }).max(100).optional(),
+    paymentMethod: string().optional(),
+    fixedExpense: zodEnum(["FIJO", "BASICO", "VARIABLE"], { // Añadido "VARIABLE"
+        required_error: "El tipo de gasto es obligatorio.",
+    }),
+    providerPhoneNumber: string()
+        .regex(/^\+?\d{7,15}$/, { message: "Número de teléfono del proveedor no válido." }) // Regex simple para teléfono internacional
+        .optional(),
 });

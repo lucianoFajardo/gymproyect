@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, JSX, useEffect,} from "react"; // Añadido useEffect
+import { useState, useEffect, useMemo, } from "react"; // Añadido useEffect
 import {
     Table,
     TableBody,
@@ -11,133 +11,170 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, AlertTriangle, CalendarClock, History, EyeIcon, } from "lucide-react"; // Añadido History icon
-import { format, differenceInDays, isPast, isToday, addMonths, addDays, addYears } from 'date-fns';
+import { CheckCircle, History, EyeIcon, Trash2, EditIcon, BookAudio, } from "lucide-react";
+import { format, addMonths, addDays, addYears } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ServicePaymentHistoryModal} from "./service-payment-history"; // Importar el modal
+import { ServicePaymentHistoryModal } from "./service-payment-history-modal";
 import { Card, CardDescription, CardHeader, CardTitle } from "./card";
 import { ServicesModel } from "@/Model/Services-model";
 import { getAllDataServiceAction } from "@/actions/get-data-services-action";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./dialog";
 import { Separator } from "@radix-ui/react-separator";
 import { createPaymentServiceAction } from "@/actions/create-payment-services-action";
 import { toast } from "sonner";
 import { updateServicesPaymentAction } from "@/actions/update-services-action";
 import { PaymentServiceHistoryModel } from "@/Model/Paymet-Service-model";
 import { getPaymentServicesAction } from "@/actions/get-data-service-payment-action";
-
-//* Helper o funcion, para obtener el estado del vencimiento
-const getDueDateStatus = (dueDate: Date, serviceStatus: ServicesModel["status"]): { text: string; variant: "default" | "destructive" | "secondary" | "outline"; icon?: JSX.Element } => {
-    if (serviceStatus === "PAGADO" || serviceStatus === "INACTIVO") {
-        return { text: serviceStatus === "PAGADO" ? "Pagado" : "Inactivo", variant: "default" };
-    }
-    const today = new Date();
-    const daysUntilDue = differenceInDays(dueDate, today);
-    if (isPast(dueDate) && !isToday(dueDate)) {
-        return { text: "Vencido", variant: "destructive", icon: <AlertTriangle className=" mr-1" /> };
-    }
-    if (daysUntilDue <= 0) {
-        return { text: "Vence Hoy", variant: "destructive", icon: <AlertTriangle className="h-4 w-4 mr-1" /> };
-    }
-    if (daysUntilDue <= 7) {
-        return { text: `Vence en ${daysUntilDue} día(s)`, variant: "default", icon: <CalendarClock className=" mr-1" /> };
-    }
-    return { text: "Activo", variant: "secondary" };
-};
-
+import { deleteServiceAction } from "@/actions/delete-services-action";
+import { AlertDialogModalProps } from "./alert-dialog-modal";
+import { ServiceViewModal } from "./service-view-modal";
+import { getDueDateStatus } from "@/actions/expiration-service-action";
+import { EditServiceDialog } from "./update-service-modal";
 
 export function ServiceListTable() {
     useEffect(() => {
-        getAllDataServiceAction().then(data => setServices(data))
+        setLoading(true);
+        getAllDataServiceAction().then(data => {
+            if (!data || data.length === 0) {
+                toast.error("No se encontraron servicios.");
+                setLoading(false);
+                return;
+            }
+            setServices(data)
+            setLoading(false);
+        })
     }, []);
-
-    useEffect(() => {
-        //TODO : Seguir aqui , llamo a todos los pagos de servicios, para que se carguen al inicio de la aplicacion , despues filtrarlos por el servicio que se nececita
-        getPaymentServicesAction().then(history => {
-            console.log("Historial de pagos:", history.length);
-        });
-     }, []);
 
     const [services, setServices] = useState<ServicesModel[]>();
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [isViewDataServiceOpen, setIsViewDataServiceOpen] = useState(true);
-    const [selectedService, setSelectedService] = useState<ServicesModel | null>(null);
-
-    const [selectedServiceForHistory, setSelectedServiceForHistory] = useState<ServicesModel | null>(null);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [selectedServiceView, setSelectedServiceView] = useState<ServicesModel[]>();
+    const [selectedServiceForDelete, setSelectedServiceForDelete] = useState<ServicesModel | null>();
+    const [selectedServiceForHistory, setSelectedServiceForHistory] = useState<ServicesModel | null>();
     const [currentHistoryData, setCurrentHistoryData] = useState<PaymentServiceHistoryModel[]>();
+    const [loading, setLoading] = useState(false);
+    const [selectedServiceForPaid, setSelectedServiceForPaid] = useState<ServicesModel | null>();
+    const [isPaidDialogOpen, setIsPaidDialogOpen] = useState(false);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+    const [serviceToEdit, setServiceToEdit] = useState<ServicesModel | undefined>();
+
+    const handleEdit = (value: ServicesModel) => {
+        setServiceToEdit(value);
+        setIsDialogOpen(true);
+    };
+
+    const handlerPaid = (service: ServicesModel) => {
+        setSelectedServiceForPaid(service);
+        setIsPaidDialogOpen(true);
+    }
     //*** Para crear y a la vez guardar este pago, el cual se almacenara en la base de datos, con un boton tengo que entregarle la info*/
-    const handleMarkAsPaid = async (serviceId: string) => {
-        const serviceToUpdate = services!.find(s => s.id === serviceId);
-        if (!serviceToUpdate) {
-            toast.error("Servicio no encontrado.");
+    const handleMarkAsPaid = async () => {
+        if (!selectedServiceForPaid) {
+            toast.error("La lista de servicios no está disponible.");
             return;
         }
-        let newDueDate = new Date(serviceToUpdate.dueDate);
-        switch (serviceToUpdate.paymentFrequency) {
-            case "7": newDueDate = addDays(new Date(serviceToUpdate.dueDate), 7); break;
-            case "30": newDueDate = addMonths(new Date(serviceToUpdate.dueDate), 1); break;
-            case "90": newDueDate = addMonths(new Date(serviceToUpdate.dueDate), 3); break;
-            case "360": newDueDate = addYears(new Date(serviceToUpdate.dueDate), 1); break;
+        const initialDueDate = new Date(selectedServiceForPaid.dueDate);
+        let newDueDate = new Date(initialDueDate);
+        switch (selectedServiceForPaid.paymentFrequency) {
+            case "7": newDueDate = addDays(initialDueDate, 7); break;
+            case "30": newDueDate = addMonths(initialDueDate, 1); break;
+            case "90": newDueDate = addMonths(initialDueDate, 3); break;
+            case "360": newDueDate = addYears(initialDueDate, 1); break;
             default:
-                toast.warning("Frecuencia de pago no válida, por favor revisa la configuración del servicio.");
-                break;
+                toast.warning("Frecuencia de pago no válida. No se puede procesar el pago.");
+                return;
         }
         try {
-            const response = await createPaymentServiceAction(serviceToUpdate);
-            //* Primero registro el pago del servicio 
-            if (response.success) {
-                toast.success("Pago registrado exitosamente");
-                //* Creo el payload para actualizar el servicio
-                const servicePayload = {
-                    status: "PAGADO",
-                    dueDate: newDueDate,
-                };
-                //* Llamo a la funcion para actualizar el servicio con el nuevo estado y fecha de pago.
-                const updateResponse = await updateServicesPaymentAction(serviceId, servicePayload);
-                if (updateResponse.success) {
-                    toast.success("Servicio actualizado exitosamente");
-                    //* Actualizar el estado local de los servicios
-                    setServices(prevServices =>
-                        prevServices!.map(service =>
-                            service.id === serviceId
-                                ? {
-                                    ...service,
-                                    status: "PAGADO",
-                                    dueDate: newDueDate,
-                                    lastPaymentDate: new Date(),
-                                }
-                                : service
-                        )
-                    );
-                } else {
-                    toast.error(updateResponse.message || "Error al actualizar el servicio.");
-                }
+            const paymentResponse = await createPaymentServiceAction(selectedServiceForPaid);
+            if (!paymentResponse.success) {
+                toast.error(paymentResponse.message || "Error al registrar el pago del servicio.");
+                return;
+            }
+            toast.success("Pago registrado. Actualizando servicio...");
+            const serviceUpdatePayload = {
+                status: "PAGADO",
+                dueDate: newDueDate,
+            };
+            const updateResponse = await updateServicesPaymentAction(selectedServiceForPaid.id, serviceUpdatePayload);
+            if (updateResponse.success) {
+                setServices(prevServices =>
+                    prevServices!.map(service =>
+                        service.id === selectedServiceForPaid.id
+                            ? {
+                                ...service,
+                                ...serviceUpdatePayload,
+                                lastPaymentDate: new Date(),
+                            }
+                            : service
+                    )
+                );
+                toast.success("¡Servicio actualizado exitosamente!");
+                setIsPaidDialogOpen(false);
+                setSelectedServiceForPaid(null);
             } else {
-                toast.error(response.message || "Error al registrar el pago del servicio.");
+                toast.error(updateResponse.message || "Error al actualizar el estado del servicio.");
+                toast.warning("ADVERTENCIA: El sistema puede estar en un estado inconsistente. Por favor, verifique manualmente.");
             }
         } catch (error) {
-            throw new Error("Error en el servidor al tratar de registrar el pago." + error);
+            const errorMessage = error instanceof Error ? error.message : "Ocurrió un error inesperado.";
+            toast.error(`Error en el servidor: ${errorMessage}`);
         }
     };
 
-    // const handleEditService = (serviceId: string) => {
-    //     console.log(`Editar servicio ${serviceId}`);
-    //     // Aquí podrías redirigir a una página de edición o abrir un modal de edición
-    //     // Por ahora, solo mostramos un mensaje en la consola
-    // };
+    //* Para tener los costes totales de los servicios
+    const totalCost = useMemo(() => {
+        if (!services || services.length === 0) return 0;
+        return services?.reduce((total, service) => total + (service.serviceCost || 0), 0) || 0;
+    }, [services]);
 
     const handleViewDetails = (service: ServicesModel) => {
-        setSelectedService(service);
+        setSelectedServiceView(service ? [service] : []);
         setIsViewDataServiceOpen(true);
+    }
+
+    const handleDelete = (service: ServicesModel) => {
+        setSelectedServiceForDelete(service);
+        setIsDeleteDialogOpen(true);
+    }
+
+    const handleConfirmDelete = async () => {
+        if (!selectedServiceForDelete) {
+            toast.error("No se ha seleccionado ningún servicio para eliminar.");
+            return;
+        }
+        try {
+            const response = await deleteServiceAction(selectedServiceForDelete.id);
+            if (response.success) {
+                setServices(prevServices => prevServices?.filter(s => s.id !== selectedServiceForDelete!.id));
+                toast.success("Servicio eliminado exitosamente.");
+            } else {
+                toast.error(response.message || "Error al eliminar el servicio.");
+            }
+            setIsDeleteDialogOpen(false);
+            setSelectedServiceForDelete(undefined);
+        } catch (error) {
+            toast.error(`Error al eliminar el servicio: ${error}`);
+        }
     }
 
     const handleViewHistory = (service: ServicesModel) => {
         setSelectedServiceForHistory(service);
-        // En una aplicación real, aquí harías fetch del historial para este service.serviceId
-        // Aqui tengo que tener el get de los pagos de este servicio;
+        getPaymentServicesAction().then(history => {
+            const filteredHistory = history.filter(h => h.serviceId === service.id);
+            setCurrentHistoryData(filteredHistory);
+        });
         setIsHistoryModalOpen(true);
     };
+
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-full">
+                <BookAudio className="h-12 w-12 animate-pulse text-primary" />
+                <p className="ml-4 text-lg">Crear servicios ...</p>
+            </div>
+        );
+    }
 
     return (
         <Card className="w-full max-w-5xl mx-auto my-8">
@@ -146,6 +183,12 @@ export function ServiceListTable() {
                     <div>
                         <CardTitle className="text-2xl font-bold">Lista de servicios</CardTitle>
                         <CardDescription className='p-2'>Gestionar los servicio que tienes creados, para poder tener las cuentas al dia.</CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <CardDescription className="text-sm font-semibold">Total de gastos:</CardDescription>
+                        <span className="px-2 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                            ${totalCost.toLocaleString()}
+                        </span>
                     </div>
                 </div>
             </CardHeader>
@@ -157,7 +200,6 @@ export function ServiceListTable() {
                             <TableHead>Costo</TableHead>
                             <TableHead>Próximo Vencimiento</TableHead>
                             <TableHead>Estado de Vencimiento</TableHead>
-                            <TableHead>Estado</TableHead>
                             <TableHead>Frecuencia</TableHead>
                             <TableHead className="text-right">Acciones</TableHead>
                         </TableRow>
@@ -171,7 +213,7 @@ export function ServiceListTable() {
                             </TableRow>
                         ) : (
                             services?.map((service) => {
-                                const dueDateInfo = getDueDateStatus(service.dueDate, service.status);
+                                const dueDateInfo = getDueDateStatus(service.dueDate);
                                 return (
                                     <TableRow key={service.id}>
                                         <TableCell className="font-medium">{service.serviceName}</TableCell>
@@ -192,15 +234,6 @@ export function ServiceListTable() {
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
-                                            <span className={`px-2 py-1 rounded-full text-xs ${service.status === "ACTIVO" ? "bg-gray-200 text-gray-800 " :
-                                                service.status === "INACTIVO" ? "bg-red-200 text-red-800" :
-                                                    service.status === "PAGADO" ? "bg-green-200 text-green-800" :
-                                                        "bg-gray-100 text-gray-800" //* Estilo por defecto 
-                                                }`}>
-                                                {service.status.charAt(0).toUpperCase() + service.status.slice(1).toLowerCase()}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell>
                                             <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full  bg-blue-100 text-blue-800">
                                                 {service.paymentFrequency} Dias
                                             </span>
@@ -211,12 +244,20 @@ export function ServiceListTable() {
                                                     <EyeIcon className="h-4 w-4" />
                                                     <span className="sr-only">Ver</span>
                                                 </Button>
+                                                <Button variant="outline" size="icon" onClick={() => handleEdit(service)}>
+                                                    <EditIcon className="h-4 w-4" />
+                                                    <span className="sr-only">Modificar</span>
+                                                </Button>
+                                                <Button variant="destructive" size="icon" onClick={() => handleDelete(service)}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                    <span className="sr-only">Eliminar</span>
+                                                </Button>
                                                 <Button variant="default" size="icon" onClick={() => handleViewHistory(service)}>
                                                     <History className="h-4 w-4" />
                                                     <span className="sr-only">Ver pagos</span>
                                                 </Button>
                                                 <Separator orientation="vertical">|</Separator>
-                                                <Button variant="outline" size="icon" onClick={() => handleMarkAsPaid(service.id)}>
+                                                <Button variant="outline" size="icon" onClick={() => handlerPaid(service)}>
                                                     <CheckCircle className="h-4 w-4" />
                                                     <span className="sr-only">Activar Plan</span>
                                                 </Button>
@@ -230,91 +271,58 @@ export function ServiceListTable() {
                 </Table>
             </div>
 
-            {/* Aqui esta el modal para poder ver el historial de pagos de este servicio*/}
+            {/* Modal para poder ver el historial de pagos de este servicio*/}
             {selectedServiceForHistory && (
                 <ServicePaymentHistoryModal
                     isOpen={isHistoryModalOpen}
                     onOpenChange={setIsHistoryModalOpen}
                     serviceName={selectedServiceForHistory.serviceName}
-                    historyData={currentHistoryData || []}
+                    historyData={currentHistoryData ? currentHistoryData : []}
                 />
             )}
 
-            {/* Aqui podemos visualizar los datos del servicio */}
-            {isViewDataServiceOpen && selectedService && ( // Asegúrate que selectedService no sea null
-                <Dialog open={isViewDataServiceOpen} onOpenChange={setIsViewDataServiceOpen}>
-                    <DialogContent className="max-w-lg"> {/* Ajustado el ancho un poco */}
-                        <DialogHeader>
-                            <DialogTitle>Detalles del Servicio: {selectedService.serviceName}</DialogTitle>
-                            <DialogDescription>
-                                Aquí puedes ver los detalles completos del servicio.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="grid gap-3 py-4 max-h-[70vh] overflow-y-auto text-sm pr-2"> {/* pr-2 para espacio de scrollbar */}
-                            <div className="grid grid-cols-[150px_1fr] items-center gap-x-4 gap-y-1">
-                                <span className="font-semibold text-muted-foreground">ID del Servicio:</span>
-                                <span>{selectedService.id}</span>
-                            </div>
-                            <div className="grid grid-cols-[150px_1fr] items-center gap-x-4 gap-y-1">
-                                <span className="font-semibold text-muted-foreground">Nombre del Servicio:</span>
-                                <span className="font-medium">{selectedService.serviceName}</span>
-                            </div>
-                            <div className="grid grid-cols-[150px_1fr] items-center gap-x-4 gap-y-1">
-                                <span className="font-semibold text-muted-foreground">Costo del Servicio:</span>
-                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
-                                    ${selectedService.serviceCost?.toLocaleString()}</span>
-                            </div>
-                            <div className="grid grid-cols-[150px_1fr] items-center gap-x-4 gap-y-1">
-                                <span className="font-semibold text-muted-foreground">Próximo Vencimiento:</span>
-                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                    {selectedService.dueDate ? format(new Date(selectedService.dueDate), "PPP", { locale: es }) : "-"}</span>
-                            </div>
-                            <div className="grid grid-cols-[150px_1fr] items-center gap-x-4 gap-y-1">
-                                <span className="font-semibold text-muted-foreground">Frecuencia de Pago:</span>
-                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                    {(selectedService.paymentFrequency)} Dias</span>
-                            </div>
-                            <div className="grid grid-cols-[150px_1fr] items-center gap-x-4 gap-y-1">
-                                <span className="font-semibold text-muted-foreground">Tipo de Gasto:</span>
-                                <span>{selectedService.fixedExpense}</span>
-                            </div>
-                            <hr className="my-2" />
-                            <div className="grid grid-cols-[150px_1fr] items-center gap-x-4 gap-y-1">
-                                <span className="font-semibold text-muted-foreground">Nombre Proveedor:</span>
-                                <span>{selectedService.providerName || "-"}</span>
-                            </div>
-                            <div className="grid grid-cols-[150px_1fr] items-center gap-x-4 gap-y-1">
-                                <span className="font-semibold text-muted-foreground">Persona de Contacto:</span>
-                                <span>{selectedService.contactPerson || "-"}</span>
-                            </div>
-                            <div className="grid grid-cols-[150px_1fr] items-center gap-x-4 gap-y-1">
-                                <span className="font-semibold text-muted-foreground">Teléfono Proveedor:</span>
-                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                    {selectedService.providerPhoneNumber || "-"}</span>
-                            </div>
-                            <hr className="my-2" />
-                            <div className="grid grid-cols-[150px_1fr] items-center gap-x-4 gap-y-1">
-                                <span className="font-semibold text-muted-foreground">Método de Pago:</span>
-                                <span>{selectedService.paymentMethod || "-"}</span>
-                            </div>
-                            {selectedService.notes && (
-                                <div className="grid grid-cols-[150px_1fr] items-start gap-x-4 gap-y-1"> {/* items-start para notas largas */}
-                                    <span className="font-semibold text-muted-foreground">Notas:</span>
-                                    <span className="whitespace-pre-wrap">{selectedService.notes}</span>
-                                </div>
-                            )}
-                            <hr className="my-2" />
-                        </div>
-                        <DialogFooter>
-                            <Button onClick={() => setIsViewDataServiceOpen(false)} variant="default">
-                                Cerrar
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
+            {/* Modal para ver los detalles del servicio */}
+            {selectedServiceView && (
+                <ServiceViewModal
+                    isOpen={isViewDataServiceOpen}
+                    onClose={() => setIsViewDataServiceOpen(false)}
+                    onOpenChange={setIsViewDataServiceOpen}
+                    serviceData={selectedServiceView ? selectedServiceView : []} // Asegúrate de pasar un objeto válido
+                />
             )}
 
+            {/* Renderiza el Dialog de modificiacion aquí del servico */}
+            {serviceToEdit && (
+                <EditServiceDialog
+                    isOpen={isDialogOpen}
+                    onOpenChange={setIsDialogOpen}
+                    service={serviceToEdit}
+                    onUpdateService={handleEdit}
+                />
+            )}
 
+            {/* Modal para marcar el servicio como pagado */}
+            {selectedServiceForPaid && (
+                <AlertDialogModalProps
+                    title={`Marcar ${selectedServiceForPaid.serviceName} como pagado`}
+                    description={`¿Estás seguro de que deseas marcar el servicio ${selectedServiceForPaid.serviceName} como pagado?`}
+                    confirmText="Si, marcar como pagado"
+                    isOpen={isPaidDialogOpen}
+                    onOpenChange={setIsPaidDialogOpen}
+                    onclick={handleMarkAsPaid}
+                />
+            )}
+
+            {/* Dialogo de confirmacion para eliminar el servicio */}
+            <AlertDialogModalProps
+                title="¿Estás seguro de eliminar este servicio?"
+                description="Esta acción no se puede deshacer. Se eliminará permanentemente el servicio del inventario. Perdiendo todos los datos asociados a este servicio."
+                confirmText="Si, eliminar"
+                isOpen={isDeleteDialogOpen}
+                onOpenChange={setIsDeleteDialogOpen}
+                onclick={handleConfirmDelete}
+            />
         </Card>
     );
 }
+

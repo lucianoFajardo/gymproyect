@@ -7,7 +7,7 @@ import { z } from "zod";
 
 type parseEditProduct = z.infer<typeof productSchema>;
 
-export async function editProductAction(idPlanEdit: string , value: parseEditProduct) {
+export async function editProductAction(idPlanEdit: string, value: parseEditProduct) {
     try {
         const dataValidation = productSchema.safeParse(value);
         if (!dataValidation.success) {
@@ -52,3 +52,4 @@ export async function editProductAction(idPlanEdit: string , value: parseEditPro
         };
     }
 }
+

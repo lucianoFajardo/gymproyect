@@ -31,9 +31,7 @@ import { deleteDataUserAction } from "@/actions/delete-data-user-action"
 import { Badge } from "./badge"
 import { Card, CardDescription, CardHeader, CardTitle } from "./card"
 
-//TODO : Seguir aqui despues tengo que pulir unas cuantas cosas mas y estariamos listos , recordar que downgraidie el reactDom y react 
 export default function UserTable() {
-
     const ITEMS_PER_PAGE = 15; // Define cuántos usuarios mostrar por página
     const [isLoading, setIsLoading] = useState(true);
 

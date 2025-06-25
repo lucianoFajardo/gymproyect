@@ -58,6 +58,11 @@ export async function getAllDataServiceAction(): Promise<ServicesModel[]> {
                 providerPhoneNumber: true,
                 paymentMethod: true,
                 notes: true,
+                ServicePayment:{
+                    select: {
+                        serviceId:true
+                    }
+                }
             }
         });
 
