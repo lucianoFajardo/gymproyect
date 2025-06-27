@@ -19,16 +19,16 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { getDataUserActionWithSubscription } from '@/actions/get-data-user-action';
 import { UserModel } from '@/Model/User-model';
 import checkSubscriptionExpiration from '@/actions/expiration-subscription-action';
-import { Label } from './label';
-import { Input } from './input';
+import { Label } from '../ui/label';
+import { Input } from '../ui/input';
 
 import { editSubscriptionPlanAction } from '@/actions/edit-subsription-plan-action';
 import { toast } from 'sonner';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { SubscriptionPlanModel } from '@/Model/Subscription-Plan-model';
 import { getAllSubscriptionPlansAction } from '@/actions/get-subscription-plan-action';
 import { editPlanSubscriptionAction } from '@/actions/edit-plans-action';

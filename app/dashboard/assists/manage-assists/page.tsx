@@ -1,4 +1,4 @@
-import RegisterAssistsTable from '@/components/ui/register-assists-table'
+import RegisterAssistsTable from '@/components/promps/register-assists-table'
 import React from 'react'
 
 export default function pageViwTable() {

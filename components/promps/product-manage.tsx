@@ -45,9 +45,9 @@ import { getDataProductsAllAction } from '@/actions/get-data-products-action';
 import { getAllCategoriesAction } from '@/actions/get-data-categories-action';
 import { editProductAction } from '@/actions/edit-products-actions';
 import { deleteProductsAction } from '@/actions/delete-products-action';
-import { AlertDialogModalProps } from '@/components/ui/alert-dialog-modal';
+import { AlertDialogModalProps } from '@/components/promps/alert-dialog-modal';
 import { Separator } from '@/components/ui/separator';
-import { ProductDialogModal } from '@/components/ui/product-dialog-modal';
+import { ProductDialogModal } from '@/components/promps/product-dialog-modal';
 
 const ITEMS_PER_PAGE = 10;
 export default function ManageProducts() {

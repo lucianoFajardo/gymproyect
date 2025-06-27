@@ -1,4 +1,4 @@
-import ProfileForm from '@/components/ui/create-user-form'
+import ProfileForm from '@/components/promps/create-user-form'
 export default function UserCreatePage() {
   return (
     <ProfileForm />

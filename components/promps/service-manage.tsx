@@ -15,7 +15,7 @@ import { CheckCircle, History, EyeIcon, Trash2, EditIcon, BookAudio, } from "luc
 import { format, addMonths, addDays, addYears } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ServicePaymentHistoryModal } from "./service-payment-history-modal";
-import { Card, CardDescription, CardHeader, CardTitle } from "./card";
+import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { ServicesModel } from "@/Model/Services-model";
 import { getAllDataServiceAction } from "@/actions/get-data-services-action";
 import { Separator } from "@radix-ui/react-separator";

@@ -1,4 +1,4 @@
-import RegisterAssistsView from '@/components/ui/register-assists-view'
+import RegisterAssistsView from '@/components/promps/register-assists-view'
 import React from 'react'
 
 export default function PageAssists() {

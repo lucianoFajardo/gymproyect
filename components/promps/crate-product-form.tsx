@@ -16,7 +16,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { toast } from 'sonner';
-import { Textarea } from './textarea';
+import { Textarea } from '../ui/textarea';
 import { productSchema } from '@/lib/zod';
 import { createProductAction } from '@/actions/create-product-action';
 import { getAllCategoriesAction } from '@/actions/get-data-categories-action';

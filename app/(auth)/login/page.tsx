@@ -1,6 +1,6 @@
 "use client"
 
-import { LoginForm } from '@/components/ui/login-form'
+import { LoginForm } from '@/components/promps/login-form'
 import { HandCoins } from 'lucide-react'
 //import LoginForm from '@/components/ui/login-form'
 import React from 'react'

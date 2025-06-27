@@ -1,5 +1,5 @@
 
-import SubscriptionTable from '@/components/ui/subscription-table'
+import SubscriptionTable from '@/components/promps/subscription-table'
 import React from 'react'
 
 export default function ManageSubscriptions() {

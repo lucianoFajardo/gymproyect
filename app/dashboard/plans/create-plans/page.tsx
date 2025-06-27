@@ -1,4 +1,4 @@
-import CreatePlansForm from '@/components/ui/create-plans-form'
+import CreatePlansForm from '@/components/promps/create-plans-form'
 import React from 'react'
 
 export default function ManagePlans() {

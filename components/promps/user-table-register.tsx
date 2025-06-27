@@ -26,10 +26,10 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
     AlertDialogTrigger,
-} from "@/components/ui/alert-dialog" // Asegúrate que la ruta sea correcta
+} from "@/components/promps/alert-dialog" // Asegúrate que la ruta sea correcta
 import { deleteDataUserAction } from "@/actions/delete-data-user-action"
-import { Badge } from "./badge"
-import { Card, CardDescription, CardHeader, CardTitle } from "./card"
+import { Badge } from "../ui/badge"
+import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card"
 
 export default function UserTable() {
     const ITEMS_PER_PAGE = 15; // Define cuántos usuarios mostrar por página

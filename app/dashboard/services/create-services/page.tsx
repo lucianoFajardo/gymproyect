@@ -1,4 +1,4 @@
-import { CreateServiceForm } from '@/components/ui/create-services-form'
+import { CreateServiceForm } from '@/components/promps/create-services-form'
 import React from 'react'
 
 export default function CreateServicesPage() {

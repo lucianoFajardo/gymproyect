@@ -1,4 +1,4 @@
-import PlansTable from '@/components/ui/plans-table'
+import PlansTable from '@/components/promps/plans-table'
 import React from 'react'
 
 export default function EditPlans() {

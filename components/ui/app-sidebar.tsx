@@ -8,7 +8,6 @@ import {
   User,
   ScanQrCodeIcon,
   LucideShoppingBasket,
-  ContactRoundIcon,
   Rabbit,
   HandCoins,
   SquareActivity,
@@ -47,15 +46,15 @@ const data = {
       items: [
         {
           title: "Crear venta",
-          url: "/dashboard/manage-plans",
+          url: "/dashboard/#",
         },
         {
           title: "Registrar asistencia",
-          url: "/dashboard/manage-subscriptions",
+          url: "/dashboard/#",
         },
         {
           title: "Activar subscripcion",
-          url: "#",
+          url: "/dashboard/#",
         },
       ],
     },
@@ -67,11 +66,11 @@ const data = {
       items: [
         {
           title: "Crear usuario",
-          url: "/dashboard/create-user",
+          url: "/dashboard/members/create-user",
         },
         {
           title: "Gestionar usuarios",
-          url: "/dashboard/view-users",
+          url: "/dashboard/members/view-users",
         },
       ],
     },
@@ -82,15 +81,15 @@ const data = {
       items: [
         {
           title: "Crear planes",
-          url: "/dashboard/manage-plans",
+          url: "/dashboard/plans/create-plans",
         },
         {
           title: "Gestionar planes",
-          url: "/dashboard/manage-plans/rud-plans",
+          url: "/dashboard/plans/manage-plans",
         },
         {
           title: "Gestionar subscripciones", //Aqui se tiene que poder actualizar las subscripciones de los usuarios para que puedan ingresar o no al gym
-          url: "/dashboard/manage-subscriptions",
+          url: "/dashboard/plans/manage-subscriptions",
         },
 
       ],
@@ -102,11 +101,11 @@ const data = {
       items: [
         {
           title: "Ingresar asistencias", // Aqui se tendria que agregar un apartado para poder escanear el qr de los usuarios.
-          url: "/dashboard/manage-assists",
+          url: "/dashboard/assists/create-assists",
         },
         {
           title: "Gestionar asistencias",
-          url: "/dashboard/manage-assists/view-table-assists",
+          url: "/dashboard/assists/manage-assists",
         },
       ],
     },
@@ -141,25 +140,25 @@ const data = {
         },
       ],
     },
-    {
-      title: "Trabajadores",
-      url: "#",
-      icon: ContactRoundIcon,
-      items: [
-        {
-          title: "Agregar ficha trabajador",
-          url: "/dashboard/manage-plans",
-        },
-        {
-          title: "Gestionar trabajadores",
-          url: "/dashboard/manage-subscriptions",
-        },
-        {
-          title: "Generar reportes",
-          url: "#",
-        },
-      ],
-    },
+    // {
+    //   title: "Trabajadores",
+    //   url: "#",
+    //   icon: ContactRoundIcon,
+    //   items: [
+    //     {
+    //       title: "Agregar ficha trabajador",
+    //       url: "/dashboard/workers/create-worker",
+    //     },
+    //     {
+    //       title: "Gestionar trabajadores",
+    //       url: "/dashboard/manage-subscriptions",
+    //     },
+    //     {
+    //       title: "Generar reportes",
+    //       url: "#",
+    //     },
+    //   ],
+    // },
     {
       title: "Ventas y Cierre de caja",
       url: "#",
@@ -167,7 +166,7 @@ const data = {
       items: [
         {
           title: "Crear venta",
-          url: "/dashboard/manage-plans",
+          url: "/dashboard/sales/create-sales",
         },
         {
           title: "Gestionar ventas",
@@ -175,10 +174,6 @@ const data = {
         },
         {
           title: "Generar cierre de caja",
-          url: "#",
-        },
-        {
-          title: "Generar reporte",
           url: "#",
         },
       ],

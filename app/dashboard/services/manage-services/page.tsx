@@ -1,4 +1,4 @@
-import { ServiceListTable } from '@/components/ui/service-manage'
+import { ServiceListTable } from '@/components/promps/service-manage'
 import React from 'react'
 
 export default function ManageServicePage() {

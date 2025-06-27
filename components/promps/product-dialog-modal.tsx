@@ -2,9 +2,9 @@
 
 import { Product } from "@/Model/Product-model";
 import { Dialog } from "@radix-ui/react-dialog";
-import { DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./dialog";
-import { Input } from "./input";
-import { Button } from "./button";
+import { DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
 import { useState } from "react";
 import { addProductAction } from "@/actions/add-product-action";
 import { toast } from "sonner";

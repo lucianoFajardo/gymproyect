@@ -20,21 +20,21 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
     AlertDialogTrigger,
-} from "@/components/ui/alert-dialog" // Asegúrate que la ruta sea correcta
+} from "@/components/promps/alert-dialog" // Asegúrate que la ruta sea correcta
 import { Button } from "@/components/ui/button"; // Para botones de acciones
 import { Edit, Trash2, } from 'lucide-react'; // Iconos para acciones
 import { getAllSubscriptionPlansAction } from '@/actions/get-subscription-plan-action';
 import { SubscriptionPlanModel } from '@/Model/Subscription-Plan-model';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Label } from '@radix-ui/react-label';
-import { Input } from './input';
+import { Input } from '../ui/input';
 import { PlansSchema } from '@/lib/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { deletePlansAction } from '@/actions/delete-plans-action';
 import { editPlanAction } from '@/actions/edit-plans-action';
-import { Badge } from "./badge"
-import { Card, CardDescription, CardHeader, CardTitle } from './card';
+import { Badge } from "../ui/badge"
+import { Card, CardDescription, CardHeader, CardTitle } from '../ui/card';
 
 export default function PlansTable() {
     // Aquí eventualmente recibirás tus datos como props o los obtendrás de un estado/contexto

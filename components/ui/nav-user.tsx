@@ -28,7 +28,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import LogoutButton from "./logout-button"
+import LogoutButton from "../promps/logout-button"
 import React from "react"
 import { useSession } from "next-auth/react"
 

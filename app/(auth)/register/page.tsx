@@ -1,4 +1,4 @@
-import RegisterForm from '@/components/ui/register-form'
+import RegisterForm from '@/components/promps/register-form'
 import React from 'react'
 
 export default function RegisterPage() {

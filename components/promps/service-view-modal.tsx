@@ -1,8 +1,8 @@
 "use client";
 
 import { ServicesModel } from "@/Model/Services-model";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./dialog";
-import { Button } from "./button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Button } from "../ui/button";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 

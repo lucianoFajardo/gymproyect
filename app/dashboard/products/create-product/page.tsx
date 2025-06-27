@@ -1,4 +1,4 @@
-import CreateProductForm from '@/components/ui/crate-product-form'
+import CreateProductForm from '@/components/promps/crate-product-form'
 import React from 'react'
 
 export default function CreateProductPage() {
