@@ -111,15 +111,16 @@ model Assists {
 }
 
 model Product {
-  id                 String    @id @default(cuid())
+  id                 String        @id @default(cuid())
   nameProduct        String
   descriptionProduct String?
   priceProduct       Int
   stockProduct       Int
-  createAt           DateTime  @default(now())
-  updateAt           DateTime  @updatedAt
+  createAt           DateTime      @default(now())
+  updateAt           DateTime      @updatedAt
   categoryId         String
-  category           Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category           Category?     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  productSale        ProductSale[]
 }
 
 model Category {
@@ -163,4 +164,14 @@ model ServicePayment {
 
   @@index([serviceId])
   @@index([paymentDate])
+}
+
+model ProductSale {
+  id        String   @id @default(cuid())
+  productId String
+  methodPay String
+  quantity  Int
+  totalPay  Int
+  createAt  DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }

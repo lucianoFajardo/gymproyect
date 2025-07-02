@@ -1,69 +1,112 @@
 "use client"
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { CartItemProduct, ProductItem } from "@/Model/Product-model";
+import { getDataProductsByCart } from "@/actions/get-data-products-action";
+import { toast } from "sonner";
+import { ShoppingCartIcon } from "lucide-react";
+import { createPaymentProductAction } from "@/actions/create-payment-product-action";
 
-const products = [
-    { id: 1, name: "Producto 1", price: 10, stock: 20 },
-    { id: 2, name: "Producto 2", price: 15, stock: 10 },
-    { id: 3, name: "Proteína", price: 50, stock: 5 },
-    { id: 4, name: "Creatina", price: 30, stock: 8 },
-];
-
-type CartItem = {
-    id: number;
-    name: string;
-    price: number;
-    quantity: number;
-};
 
 export const CreateSalesForm = () => {
-    const [cart, setCart] = useState<CartItem[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [products, setProducts] = useState<ProductItem[]>([]);
+    const [cart, setCart] = useState<CartItemProduct[]>([]);
     const [openDialog, setOpenDialog] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState<string>("efectivo");
 
-    const handleAddToCart = (product: typeof products[0]) => {
-        setCart((prev) => {
-            const found = prev.find((item) => item.id === product.id);
-            if (found) {
-                return prev.map((item) =>
-                    item.id === product.id && item.quantity < product.stock
-                        ? { ...item, quantity: item.quantity + 1 }
-                        : item
-                );
+    useEffect(() => {
+        async function fetchProducts() {
+            setIsLoading(true);
+            try {
+                const res = await getDataProductsByCart();
+                if (res.length === 0) {
+                    toast.error("No hay productos disponibles para la venta.");
+                }
+                setProducts(res);
+            } catch (error) {
+                toast.error("Error al cargar los productos. Por favor, inténtalo de nuevo." + error);
+            } finally {
+                setIsLoading(false);
             }
-            return [...prev, { ...product, quantity: 1 }];
-        });
-    };
+        }
+        fetchProducts();
+    }, [])
 
-    const handleRemoveFromCart = (productId: number) => {
+    const handleRemoveFromCart = (productId: string) => {
         setCart((prev) => prev.filter((item) => item.id !== productId));
     };
 
-    const handleQuantityChange = (productId: number, value: number) => {
+    const handleQuantityChange = (productId: string, value: number) => {
         setCart((prev) =>
             prev.map((item) =>
                 item.id === productId
-                    ? { ...item, quantity: Math.max(1, value) }
+                    ? { ...item, quantity: Math.max(0, value) }
                     : item
             )
         );
     };
 
-    const calculateTotal = () =>
-        cart.reduce((total, item) => total + item.price * item.quantity, 0);
 
-    const handleConfirmSale = () => {
-        // Aquí puedes manejar la lógica de guardar la venta con el método de pago seleccionado
-        setCart([]);
+
+
+    const calculateTotal = () =>
+        cart.reduce((total, item) => total + item.priceProduct * item.quantity, 0);
+
+    const handleConfirmSale = async () => {
+        const total = calculateTotal();
+        let allSuccess = true;
+        let errorMessage = "";
+
+        for (const cartProduct of cart) {
+            const ventaItem = {
+                ...cartProduct,
+                totalPrice: total,
+                methodPay: paymentMethod,
+                stockProduct: cartProduct.stockProduct - cartProduct.quantity, // Actualiza el stock restando la cantidad vendida
+            };
+            const res = await createPaymentProductAction(ventaItem);
+            if (!res.success) {
+                allSuccess = false;
+                errorMessage = res.message || "Error al procesar la venta.";
+                break;
+            }
+            console.log("Venta procesada exitosamente:", ventaItem);
+
+        }
+        if (!allSuccess) {
+            toast.error(errorMessage);
+            return;
+        }
+        toast.success("Venta procesada exitosamente.");
+        setProducts((prevProducts) =>
+            prevProducts.map((product) => {
+                const cartItem = cart.find((item) => item.id === product.id);
+                if (cartItem) {
+                    return {
+                        ...product,
+                        stockProduct: product.stockProduct - cartItem.quantity,
+                    };
+                }
+                return product;
+            })
+        );
         setOpenDialog(false);
-        setPaymentMethod("efectivo");
-        // Puedes mostrar un toast o mensaje de éxito aquí si lo deseas
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <ShoppingCartIcon className="h-12 w-12 animate-pulse text-primary" />
+                <p className="ml-4 text-lg">Crear productos ...</p>
+            </div>
+        );
+    }
 
     return (
         <Card className="max-w-5xl mx-auto space-y-2">
@@ -78,46 +121,38 @@ export const CreateSalesForm = () => {
             <CardContent className="flex flex-row gap-6">
                 {/* Columna izquierda: Productos disponibles */}
                 <div className="flex-1 p-4">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Producto</TableHead>
-                                <TableHead>Precio</TableHead>
-                                <TableHead>Stock</TableHead>
-                                <TableHead>Acción</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {products.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={4} className="text-center">
-                                        No hay productos disponibles.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                products.map((product) => (
-                                    <TableRow key={product.id}>
-                                        <TableCell>{product.name}</TableCell>
-                                        <TableCell>${product.price}</TableCell>
-                                        <TableCell>{product.stock}</TableCell>
-                                        <TableCell>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handleAddToCart(product)}
-                                                disabled={
-                                                    cart.find((item) => item.id === product.id)?.quantity ===
-                                                    product.stock
-                                                }
-                                            >
-                                                Agregar
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
+                    {
+                        products.length === 0 ? (
+                            <p className="text-muted-foreground mb-2"> Productos no disponibles por el momento. </p>
+                        ) : (
+                            <Select
+                                onValueChange={(productId) => {
+                                    const selectedProduct = products.find(p => p.id === productId);
+                                    if (!selectedProduct) {
+                                        toast.error("Producto no encontrado.");
+                                        return;
+                                    };
+                                    if (selectedProduct) {
+                                        setCart([{ ...selectedProduct, quantity: 1 }]); // Solo un producto en el carrito
+                                    };
+                                }}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Selecciona un producto" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {products.map((product) => (
+                                        <SelectItem
+                                            key={product.id}
+                                            value={product.id}
+                                        >
+                                            {product.nameProduct} -- ${product.priceProduct.toLocaleString()}, (Stock: {product.stockProduct})
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )
+                    }
                 </div>
                 {/* Columna derecha: Carrito */}
                 <div className="flex-1 p-4">
@@ -131,19 +166,22 @@ export const CreateSalesForm = () => {
                                     <TableHead>Producto</TableHead>
                                     <TableHead>Cantidad</TableHead>
                                     <TableHead>Precio</TableHead>
-                                    <TableHead>Total</TableHead>
                                     <TableHead>Acción</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {cart.map((item) => (
                                     <TableRow key={item.id}>
-                                        <TableCell>{item.name}</TableCell>
+                                        <TableCell>
+                                            <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                                                {item.nameProduct}
+                                            </span>
+                                        </TableCell>
                                         <TableCell>
                                             <Input
                                                 type="number"
-                                                min={1}
-                                                max={products.find((p) => p.id === item.id)?.stock ?? 1}
+                                                min={0}
+                                                max={cart.find((p) => p.id === item.id)?.stockProduct ?? 0}
                                                 value={item.quantity}
                                                 onChange={(e) =>
                                                     handleQuantityChange(item.id, Number(e.target.value))
@@ -151,8 +189,11 @@ export const CreateSalesForm = () => {
                                                 className="w-16"
                                             />
                                         </TableCell>
-                                        <TableCell>${item.price}</TableCell>
-                                        <TableCell>${item.price * item.quantity}</TableCell>
+                                        <TableCell>
+                                            <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                ${item.priceProduct.toLocaleString()}
+                                            </span>
+                                        </TableCell>
                                         <TableCell>
                                             <Button
                                                 variant="destructive"
@@ -167,8 +208,10 @@ export const CreateSalesForm = () => {
                             </TableBody>
                         </Table>
                     )}
-                    <div className="text-right mt-2 font-bold">
-                        Total: ${calculateTotal()}
+                    <div className="text-right mt-2 font-semibold">
+                        <span className="px-2 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-yellow-100 text-yellow-800">
+                            Total: ${calculateTotal().toLocaleString()}
+                        </span>
                     </div>
                     <div className="flex gap-2 justify-end mt-4">
                         <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
@@ -198,7 +241,8 @@ export const CreateSalesForm = () => {
                                     </Select>
                                 </div>
                                 <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogCancel onClick={() => setCart([])}>Cancelar</AlertDialogCancel>
+                                    {/* Confirmar la venta y facturar aqui se encuentra la funcion*/}
                                     <AlertDialogAction onClick={handleConfirmSale}>
                                         Confirmar y Facturar
                                     </AlertDialogAction>
