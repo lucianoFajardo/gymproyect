@@ -30,7 +30,6 @@ export default function RegisterAssistsTable() {
 
     //* Estados para paginación
     const [currentPage, setCurrentPage] = useState<number>(1);
-
     useEffect(() => {
         getAllDataAssistsActions().then(data => setAllAssistances(data));
     }, []);
@@ -65,7 +64,6 @@ export default function RegisterAssistsTable() {
     const handleNextPage = () => {
         setCurrentPage((prev) => Math.min(prev + 1, totalPages));
     };
-
     //* para la pagina anterior
     const handlePreviousPage = () => {
         setCurrentPage((prev) => Math.max(prev - 1, 1));

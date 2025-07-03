@@ -46,14 +46,11 @@ export const CreateSalesForm = () => {
         setCart((prev) =>
             prev.map((item) =>
                 item.id === productId
-                    ? { ...item, quantity: Math.max(0, value) }
+                    ? { ...item, quantity: Math.max(1, value) }
                     : item
             )
         );
     };
-
-
-
 
     const calculateTotal = () =>
         cart.reduce((total, item) => total + item.priceProduct * item.quantity, 0);

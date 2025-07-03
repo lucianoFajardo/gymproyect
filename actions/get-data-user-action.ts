@@ -64,7 +64,7 @@ export async function getDataUserAction(): Promise<UserModel[]> {
         return formattedUsers;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_) {
-        return [];
+        throw new Error("Error al obtener los datos de los usuarios");
     }
 }
 

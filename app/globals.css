@@ -4,6 +4,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
+body {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #dbeafe 0%, #f3e8ff 50%, #fbcfe8 100%);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

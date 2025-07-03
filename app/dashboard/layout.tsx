@@ -21,7 +21,7 @@ export default function DashboardPage({ children }: { children: React.ReactNode 
                     <SidebarTrigger />
                     <Separator orientation="vertical" className="mr-2 h-4" />
                     <Toaster richColors theme="light" />
-                    <Suspense fallback={<FullPageLoader/>}>  {/* Aqui se carga el spinner */}
+                    <Suspense fallback={<FullPageLoader />}>  {/* Aqui se carga el spinner */}
                         {children}
                     </Suspense>
                 </SidebarInset>
