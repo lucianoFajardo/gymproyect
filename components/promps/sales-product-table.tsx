@@ -5,7 +5,7 @@ import { format, isSameDay, startOfDay } from "date-fns";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card";
 import { es } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, ListFilter } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, ListFilter, ShoppingCartIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Calendar } from "../ui/calendar";
 import { getSalesProductsAction } from "@/actions/get-sales-products-action";
@@ -16,11 +16,13 @@ const ITEMS_PER_PAGE = 10;
 export default function SalesProductTable() {
     const [sales, setSales] = useState<SalesProductModel[]>([]);
     const [totalCount, setTotalCount] = useState(0);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
     const [selectedFilterDate, setSelectedFilterDate] = useState<Date | undefined>(startOfDay(new Date()));
     const [filterActive, setFilterActive] = useState<boolean>(true);
     const [currentPage, setCurrentPage] = useState<number>(1);
 
     useEffect(() => {
+        setIsLoading(true);
         getSalesProductsAction({
             page: currentPage,
             pageSize: ITEMS_PER_PAGE,
@@ -29,6 +31,9 @@ export default function SalesProductTable() {
         }).then((res) => {
             setSales(res.sales);
             setTotalCount(res.totalCount);
+            setIsLoading(false);
+        }).catch((error) => {
+            throw new Error(`Error al obtener las ventas: ${error.message}`);
         });
     }, [currentPage, selectedFilterDate, filterActive]);
 
@@ -64,6 +69,15 @@ export default function SalesProductTable() {
         setFilterActive(!!date);
         setCurrentPage(1);
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <ShoppingCartIcon className="h-12 w-12 animate-pulse text-primary" />
+                <p className="ml-4 text-lg">Buscando ventas ...</p>
+            </div>
+        );
+    }
 
     return (
         <Card className="m-4 shadow-lg">

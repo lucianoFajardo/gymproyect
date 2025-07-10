@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import {
     Table,
@@ -11,7 +12,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { CalendarDays, ChevronLeft, ChevronRight, Replace } from 'lucide-react';
+import { CalendarDays, CalendarIcon, ChevronLeft, ChevronRight, Replace } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogClose } from "@/components/ui/dialog"
 import {
     Tooltip,
@@ -24,63 +25,54 @@ import { getDataUserActionWithSubscription } from '@/actions/get-data-user-actio
 import { UserModel } from '@/Model/User-model';
 import checkSubscriptionExpiration from '@/actions/expiration-subscription-action';
 import { Label } from '../ui/label';
-import { Input } from '../ui/input';
-
 import { editSubscriptionPlanAction } from '@/actions/edit-subsription-plan-action';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { SubscriptionPlanModel } from '@/Model/Subscription-Plan-model';
 import { getAllSubscriptionPlansAction } from '@/actions/get-subscription-plan-action';
 import { editPlanSubscriptionAction } from '@/actions/edit-plans-action';
+import { Calendar } from '../ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { es } from 'date-fns/locale';
 
 export default function UserSubscriptionManagerTable() {
-
-    const ITEMS_PER_PAGE = 15; // Define cuántos usuarios mostrar por página
+    const ITEMS_PER_PAGE = 15;
     type dataFlitred = Omit<UserModel, "lastname" | "age" | "phone" | "gmail" | "createdAt" | "statusPlan">;
-    const [dataUserSubscription, setDataUserSubscription] = useState<dataFlitred[]>();
+    const [dataUserSubscription, setDataUserSubscription] = useState<dataFlitred[]>([]);
     const [expireSubscription, setExpireSubscription] = useState<Record<string, string>>({});
     const [userStatusMap, setUserStatusMap] = useState<Record<string, string>>({});
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [currentUserToEdit, setCurrentUserToEdit] = useState<dataFlitred | null>(null);
-    const [newPaymentDate, setNewPaymentDate] = useState<string>("");
-    const [currentPage, setCurrentPage] = useState<number>(1); //* Estado para la página actual
+    const [newPaymentDate, setNewPaymentDate] = useState<Date>();
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [totalUsers, setTotalUsers] = useState<number>(0);
+    const [isChangePlanDialogOpen, setIsChangePlanDialogOpen] = useState(false);
+    const [currentUserToChangePlan, setCurrentUserToChangePlan] = useState<dataFlitred | null>(null);
+    const [selectedPlanIdForChange, setSelectedPlanIdForChange] = useState<string | undefined>();
+    const [availablePlans, setAvailablePlans] = useState<SubscriptionPlanModel[]>([]);
 
-    //* Función para recargar los datos (opcional, pero útil después de una actualización)
-    const fetchData = () => {
-        getDataUserActionWithSubscription().then((data) => {
-            if (!data || data.length === 0) {
-                toast.error("No se encontraron usuarios con suscripciones.");
-                setDataUserSubscription([]);
-                return;
-            }
-            setDataUserSubscription(data);
-            setCurrentPage(1); // Reiniciar a la primera página al cargar nuevos datos
-        });
-        // Obtener los planes de subscripcion disponibles
-        getAllSubscriptionPlansAction().then(data => setAvailablePlans(data));
-    }
-
+    // Cargar planes solo una vez
     useEffect(() => {
-        fetchData();
+        getAllSubscriptionPlansAction().then(data => setAvailablePlans(data));
     }, []);
 
-    //* Lógica de paginación */
-    const totalPages = Math.ceil((dataUserSubscription?.length ?? 0) / ITEMS_PER_PAGE);
-    const paginatedSubs = useMemo(() => {
-        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-        const endIndex = startIndex + ITEMS_PER_PAGE;
-        return (dataUserSubscription ?? []).slice(startIndex, endIndex);
-    }, [dataUserSubscription, currentPage]);
-    const handleNextPage = () => {
-        setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-    };
-    const handlePreviousPage = () => {
-        setCurrentPage((prev) => Math.max(prev - 1, 1));
-    };
-    //************************************************ */
-    
+    // Cargar usuarios paginados
     useEffect(() => {
-        if (dataUserSubscription && dataUserSubscription.length > 0) {
+        getDataUserActionWithSubscription({ page: currentPage, pageSize: ITEMS_PER_PAGE }).then((data) => {
+            if (!data || !data.users || data.users.length === 0) {
+                toast.error("No se encontraron usuarios con suscripciones.");
+                setDataUserSubscription([]);
+                setTotalUsers(0);
+                return;
+            }
+            setDataUserSubscription(data.users);
+            setTotalUsers(data.total);
+        });
+    }, [currentPage]);
+
+    // Calcular expiración y estado de cada usuario de la página actual
+    useEffect(() => {
+        if (dataUserSubscription.length > 0) {
             Promise.all(
                 dataUserSubscription.map(async (user) => {
                     const endPlanDay = user.subscriptionPlan!.durationDaysPlan;
@@ -93,7 +85,6 @@ export default function UserSubscriptionManagerTable() {
                     return acc;
                 }, {} as Record<string, string>);
                 setExpireSubscription(expirationMap);
-
                 const statusMap = results.reduce((acc, { id, status }) => {
                     acc[id] = status;
                     return acc;
@@ -105,56 +96,55 @@ export default function UserSubscriptionManagerTable() {
         }
     }, [dataUserSubscription]);
 
+    const totalPages = Math.ceil(totalUsers / ITEMS_PER_PAGE);
+
+    const handleNextPage = () => {
+        if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+    };
+    const handlePreviousPage = () => {
+        if (currentPage > 1) setCurrentPage(currentPage - 1);
+    };
+
     const handleOpenEditDialogSubscription = (user: dataFlitred) => {
         setCurrentUserToEdit(user);
-        const currentStartPlanDate = user.startPlan ? new Date(user.startPlan).toISOString().split('T')[0] : "";
+        const currentStartPlanDate = user.startPlan ? new Date(user.startPlan) : new Date();
         setNewPaymentDate(currentStartPlanDate);
         setIsEditDialogOpen(true);
     };
-
     const handleCloseEditDialog = () => {
         setIsEditDialogOpen(false);
         setCurrentUserToEdit(null);
-        setNewPaymentDate("");
     };
-    //* --- Función para editar la suscripción (Fechas de pago)---
+
     const handleSaveSubscription = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        console.log("Guardando suscripción para el usuario:", currentUserToEdit);
         try {
-            // Llamar a la nueva acción con los datos correctos
-            const formattedDate = new Date(newPaymentDate);
+            const formattedDate = new Date(String(newPaymentDate));
             const updateSubscription = await editSubscriptionPlanAction({
                 userId: currentUserToEdit!.id,
                 startDate: formattedDate.toISOString()
-            })
+            });
             if (!updateSubscription.success) {
-                console.error("Error al actualizar la suscripción:", updateSubscription.error);
                 toast.error("Error al actualizar la suscripción.");
+            } else {
+                toast.success("Suscripción actualizada correctamente.");
+                setIsEditDialogOpen(false);
+                setCurrentUserToEdit(null);
+                // Refresca la página actual
+                getDataUserActionWithSubscription({ page: currentPage, pageSize: ITEMS_PER_PAGE }).then((data) => {
+                    setDataUserSubscription(data.users || []);
+                    setTotalUsers(data.total || 0);
+                });
             }
-            toast.success("Suscripción actualizada correctamente.");
-            console.log("Suscripción actualizada:", updateSubscription.data);
-            fetchData();
-            handleCloseEditDialog();
-        } catch (error) {
-            console.error("Error al actualizar la suscripción:", error);
-            alert("Error al actualizar la suscripción.");
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_) {
+            toast.error("Error al actualizar la suscripción.");
         }
     };
 
-    //* --- Estados para el diálogo de cambio de plan ---
-    const [isChangePlanDialogOpen, setIsChangePlanDialogOpen] = useState(false);
-    const [currentUserToChangePlan, setCurrentUserToChangePlan] = useState<dataFlitred | null>(null);
-    const [selectedPlanIdForChange, setSelectedPlanIdForChange] = useState<string | undefined>();
-    const [availablePlans, setAvailablePlans] = useState<SubscriptionPlanModel[]>();
-
-    //* --- Funciones para cambiar plan ---
     const handleOpenChangePlanDialog = (user: dataFlitred) => {
         setCurrentUserToChangePlan(user);
-        console.log("id Plan Actual:", user.subscriptionPlan?.id);
-        setSelectedPlanIdForChange(user.subscriptionPlan?.id); // Preseleccionar plan actual
-
-        //  setAvailablePlans(user.subscriptionPlan ? [user.subscriptionPlan] : []); // Asumir que el usuario tiene un plan asignado
+        setSelectedPlanIdForChange(user.subscriptionPlan?.id);
         setIsChangePlanDialogOpen(true);
     };
 
@@ -166,7 +156,6 @@ export default function UserSubscriptionManagerTable() {
 
     const handleSavePlanChange = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        console.log("id plan nuevo:", selectedPlanIdForChange);
         if (!currentUserToChangePlan || !selectedPlanIdForChange) {
             toast.error("Por favor, selecciona un usuario y un nuevo plan.");
             return;
@@ -174,17 +163,19 @@ export default function UserSubscriptionManagerTable() {
         try {
             const updatePlan = await editPlanSubscriptionAction(currentUserToChangePlan.id, selectedPlanIdForChange);
             if (!updatePlan.success) {
-                console.error("Error al cambiar el plan:", updatePlan.error);
                 toast.error("Error al cambiar el plan.");
                 return;
             }
             toast.success("Plan cambiado correctamente.");
-            console.log("Plan cambiado:", updatePlan.data);
-
-            fetchData();
-            handleCloseChangePlanDialog();
-        } catch (error) {
-            console.error("Error al cambiar el plan:", error);
+            setIsChangePlanDialogOpen(false);
+            setCurrentUserToChangePlan(null);
+            setSelectedPlanIdForChange(undefined);
+            // Refresca la página actual
+            getDataUserActionWithSubscription({ page: currentPage, pageSize: ITEMS_PER_PAGE }).then((data) => {
+                setDataUserSubscription(data.users || []);
+                setTotalUsers(data.total || 0);
+            });
+        } catch (_) {
             toast.error("Error interno al cambiar el plan.");
         }
     };
@@ -200,29 +191,29 @@ export default function UserSubscriptionManagerTable() {
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto rounded-lg">
                     <Table>
                         <TableCaption>Lista de subcripciones disponibles.</TableCaption>
                         <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[200px]">Usuario</TableHead>
-                                <TableHead>Plan Actual</TableHead>
-                                <TableHead>Fecha Pago</TableHead>
-                                <TableHead>Fecha de Vencimiento</TableHead>
-                                <TableHead>Estado Plan</TableHead>
-                                <TableHead className="text-right">Acciones</TableHead>
+                            <TableRow className='bg-emerald-600 pointer-events-none'>
+                                <TableHead className="w-[200px] text-white">Usuario</TableHead>
+                                <TableHead className='text-white'>Plan Actual</TableHead>
+                                <TableHead className='text-white'>Fecha Pago</TableHead>
+                                <TableHead className='text-white'>Fecha de Vencimiento</TableHead>
+                                <TableHead className='text-white'>Estado Plan</TableHead>
+                                <TableHead className="text-right text-white">Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginatedSubs.length === 0 ? (
+                            {dataUserSubscription.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={6} className="text-center py-4">
                                         Cargando usuarios...
                                     </TableCell>
                                 </TableRow>
-                            ) :
-                                (paginatedSubs.map((user) => (
-                                    <TableRow key={user.id}>
+                            ) : (
+                                dataUserSubscription.map((user) => (
+                                    <TableRow key={user.id} className='hover:bg-green-50'>
                                         <TableCell className="font-medium">{user.name}</TableCell>
                                         <TableCell>
                                             <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
@@ -259,7 +250,7 @@ export default function UserSubscriptionManagerTable() {
                                             <TooltipProvider>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
-                                                        <Button variant="ghost" size="icon" onClick={() => handleOpenEditDialogSubscription(user)}>
+                                                        <Button variant="outline" size="icon" className='m-1' onClick={() => handleOpenEditDialogSubscription(user)}>
                                                             <CalendarDays className="h-4 w-4" />
                                                             <span className="sr-only">Fechas de pago</span>
                                                         </Button>
@@ -272,7 +263,7 @@ export default function UserSubscriptionManagerTable() {
                                             <TooltipProvider>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
-                                                        <Button variant="ghost" size="icon" onClick={() => handleOpenChangePlanDialog(user)}>
+                                                        <Button variant="default" size="icon" onClick={() => handleOpenChangePlanDialog(user)}>
                                                             <Replace className="h-4 w-4" />
                                                             <span className="sr-only">Cambiar plan</span>
                                                         </Button>
@@ -284,11 +275,13 @@ export default function UserSubscriptionManagerTable() {
                                             </TooltipProvider>
                                         </TableCell>
                                     </TableRow>
-                                )))}
+                                ))
+                            )}
                         </TableBody>
                     </Table>
                 </div>
-                {dataUserSubscription?.length === 0 && (
+                
+                {dataUserSubscription.length === 0 && (
                     <p className="text-center text-gray-500 mt-6 py-4">No hay usuarios para mostrar.</p>
                 )}
 
@@ -319,6 +312,7 @@ export default function UserSubscriptionManagerTable() {
                     </div>
                 )}
             </CardContent>
+
             {/* Diálogo para editar la suscripción */}
             {currentUserToEdit && (
                 <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -326,35 +320,40 @@ export default function UserSubscriptionManagerTable() {
                         <DialogHeader>
                             <DialogTitle>Actualizar Suscripción de: {currentUserToEdit.name}</DialogTitle>
                             <DialogDescription>
-                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
-                                    Plan actual: {currentUserToEdit.subscriptionPlan?.name || "No asignado"}.
-                                </span>
-                                <span className="block m-1 px-2 py-1  text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                                    Fecha limite a vencimiento de subscripcion: {expireSubscription[currentUserToEdit.id]}.
-                                </span>
-                                <span className={`block px-2 py-1 rounded-full text-xs ${userStatusMap[currentUserToEdit.id] === "Activo" ? "bg-green-100 text-green-800 m-1" :
-                                    userStatusMap[currentUserToEdit.id] === "Inactivo" ? "bg-red-100 text-red-800 m-1" :
-                                        "bg-gray-100 text-gray-800" // Estilo por defecto 
-                                    }`}>
-                                    Estado: {userStatusMap[currentUserToEdit.id] || "N/A"}.
-                                </span>
+                                {/* ...existing code... */}
                             </DialogDescription>
                         </DialogHeader>
-
                         <form onSubmit={handleSaveSubscription}>
                             <div className="grid gap-6 py-2">
                                 <div className="grid grid-cols-4 items-center gap-4">
                                     <Label htmlFor="paymentDate" className="text-right col-span-1">
                                         Fecha de Pago
                                     </Label>
-                                    <Input
-                                        id="paymentDate"
-                                        type="date"
-                                        value={newPaymentDate}
-                                        onChange={(e) => setNewPaymentDate(e.target.value)}
-                                        className="col-span-3"
-                                        required
-                                    />
+                                    <div className="col-span-3">
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    variant="outline"
+                                                    className="w-full justify-start text-left font-normal"
+                                                >
+                                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                                    {newPaymentDate
+                                                        ? newPaymentDate.toLocaleDateString()
+                                                        : "Seleccionar fecha"}
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0">
+                                                <Calendar
+                                                    locale={es}
+                                                    mode="single"
+                                                    selected={newPaymentDate}
+                                                    onSelect={setNewPaymentDate}
+                                                    initialFocus
+                                                    disabled={(date) => date > new Date()}
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                    </div>
                                 </div>
                                 <p className="text-sm text-yellow-600 text-center px-2 py-1 bg-yellow-50 rounded-md">
                                     Al guardar, la suscripción con la nueva fecha de pago, se actualizara en la base de datos reajustando la fecha automaticamente
@@ -372,7 +371,7 @@ export default function UserSubscriptionManagerTable() {
                         </form>
                     </DialogContent>
                 </Dialog>
-            )};
+            )}
 
             {/* Diálogo para Cambiar Plan */}
             {currentUserToChangePlan && (
@@ -411,8 +410,7 @@ export default function UserSubscriptionManagerTable() {
                                     </div>
                                 </div>
                             </div>
-                            <p className="text-sm m-4
-                             text-yellow-600 text-center px-2 py-1 bg-yellow-50 rounded-md">
+                            <p className="text-sm m-4 text-yellow-600 text-center px-2 py-1 bg-yellow-50 rounded-md">
                                 Al guardar la suscripción con el nuevo plan , se actualizara en la base de datos
                                 y se modificara la fecha de pago automaticamente, tener en cuenta esto antes de actualizar el plan.
                             </p>
@@ -429,6 +427,5 @@ export default function UserSubscriptionManagerTable() {
                 </Dialog>
             )}
         </Card>
-
     );
 }

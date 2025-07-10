@@ -35,6 +35,7 @@ interface EditServiceDialogProps {
     onOpenChange: (open: boolean) => void;
     service: ServicesModel;
     onUpdateService: (values: ServicesModel) => void;
+    onChangeState: (value: ServicesModel) => void;
 }
 
 interface TypePaymentFrequency {
@@ -42,7 +43,7 @@ interface TypePaymentFrequency {
     label: number;
 }
 
-export function EditServiceDialog({ isOpen, onOpenChange, service }: EditServiceDialogProps) {
+export function EditServiceDialog({ isOpen, onOpenChange, service, onChangeState }: EditServiceDialogProps) {
     const typePaymentFrecuency = [
         {
             value: "Semanal",
@@ -85,6 +86,7 @@ export function EditServiceDialog({ isOpen, onOpenChange, service }: EditService
             }
             const safeValues = {
                 ...values,
+                fixedExpense: values.fixedExpense || "FIJO",
                 providerName: values.providerName ?? "N/A",
                 contactPerson: values.contactPerson ?? "N/A",
                 paymentMethod: values.paymentMethod ?? "N/A",
@@ -93,14 +95,17 @@ export function EditServiceDialog({ isOpen, onOpenChange, service }: EditService
             const response = await updateServiceAction(service.id, safeValues);
             if (response.success) {
                 toast.success(response.message);
-                console.log("Servicio actualizado exitosamente:", response.data);
+                onChangeState({
+                    ...service,
+                    ...safeValues,
+                    dueDate: safeValues.dueDate ? new Date(safeValues.dueDate) : service.dueDate,
+                });
             } else {
                 toast.error(response.message || "Error al actualizar el servicio.");
             }
         } catch (error) {
             toast.error(`Error al actualizar el servicio: ${error}`);
         }
-        console.log("Datos del servicio actualizados:", values);
         onOpenChange(false);
     }
 

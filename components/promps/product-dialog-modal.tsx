@@ -13,14 +13,15 @@ interface ProductDialogModalProps {
     isOpen: boolean;
     onClose: () => void;
     product: Product;
+    onStockUpdate: (productId: string, newStock: number) => void;
 }
 
 export function ProductDialogModal({
     isOpen,
     onClose,
     product,
+    onStockUpdate,
 }: ProductDialogModalProps) {
-
     const [quantity, setQuantity] = useState<number>(1);
 
     async function handleAddProduct() {
@@ -36,6 +37,9 @@ export function ProductDialogModal({
                 return;
             }
             toast.success("Producto agregado al stock correctamente.");
+            if (onStockUpdate) {
+                onStockUpdate(product.id, quantity); // <-- Actualiza el state en el padre
+            }
             onClose();
         } catch (error) {
             throw new Error("Error en el servidor al agregar producto: " + error);
@@ -79,7 +83,7 @@ export function ProductDialogModal({
                                     Nuevo stock: {product.stockProduct + quantity}
                                 </p>
                             </div>
-                            <DialogFooter  className="col-span-2 flex justify-end space-x-2">
+                            <DialogFooter className="col-span-2 flex justify-end space-x-2">
                                 <Button variant="outline" onClick={onClose}>
                                     Cancelar
                                 </Button>

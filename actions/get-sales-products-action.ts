@@ -26,7 +26,6 @@ export async function getSalesProductsAction({
             };
         }
         // Si no hay filtro, trae todo (¡cuidado con esto en tablas grandes!)
-
         const [getSalesProduct, totalCount] = await Promise.all([
             db.productSale.findMany({
                 where,

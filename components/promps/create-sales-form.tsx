@@ -152,58 +152,60 @@ export const CreateSalesForm = () => {
                     }
                 </div>
                 {/* Columna derecha: Carrito */}
-                <div className="flex-1 p-4">
+                <div className="flex-1 p-4 bg-gray-50 shadow-md">
                     <h2 className="font-semibold mb-2">Carrito de Venta</h2>
                     {cart.length === 0 ? (
                         <p className="text-muted-foreground">No hay productos en el carrito.</p>
                     ) : (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Producto</TableHead>
-                                    <TableHead>Cantidad</TableHead>
-                                    <TableHead>Precio</TableHead>
-                                    <TableHead>Acción</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {cart.map((item) => (
-                                    <TableRow key={item.id}>
-                                        <TableCell>
-                                            <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
-                                                {item.nameProduct}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Input
-                                                type="number"
-                                                min={0}
-                                                max={cart.find((p) => p.id === item.id)?.stockProduct ?? 0}
-                                                value={item.quantity}
-                                                onChange={(e) =>
-                                                    handleQuantityChange(item.id, Number(e.target.value))
-                                                }
-                                                className="w-16"
-                                            />
-                                        </TableCell>
-                                        <TableCell>
-                                            <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                                ${item.priceProduct.toLocaleString()}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Button
-                                                variant="destructive"
-                                                size="sm"
-                                                onClick={() => handleRemoveFromCart(item.id)}
-                                            >
-                                                Eliminar
-                                            </Button>
-                                        </TableCell>
+                        <div className="max-h-96 overflow-y-auto rounded-lg">
+                            <Table>
+                                <TableHeader className="bg-emerald-600 pointer-events-none">
+                                    <TableRow>
+                                        <TableHead className="text-white">Producto</TableHead>
+                                        <TableHead className="text-white">Cantidad</TableHead>
+                                        <TableHead className="text-white">Precio</TableHead>
+                                        <TableHead className="text-white">Acción</TableHead>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                                </TableHeader>
+                                <TableBody>
+                                    {cart.map((item) => (
+                                        <TableRow key={item.id}>
+                                            <TableCell>
+                                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                                                    {item.nameProduct}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Input
+                                                    type="number"
+                                                    min={0}
+                                                    max={cart.find((p) => p.id === item.id)?.stockProduct ?? 0}
+                                                    value={item.quantity}
+                                                    onChange={(e) =>
+                                                        handleQuantityChange(item.id, Number(e.target.value))
+                                                    }
+                                                    className="w-16"
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                    ${item.priceProduct.toLocaleString()}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Button
+                                                    variant="destructive"
+                                                    size="sm"
+                                                    onClick={() => handleRemoveFromCart(item.id)}
+                                                >
+                                                    Eliminar
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
                     )}
                     <div className="text-right mt-2 font-semibold">
                         <span className="px-2 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-yellow-100 text-yellow-800">

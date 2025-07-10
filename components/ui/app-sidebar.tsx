@@ -172,10 +172,6 @@ const data = {
           title: "Gestionar ventas",
           url: "/dashboard/sales/manage-sales",
         },
-        {
-          title: "Generar cierre de caja",
-          url: "#",
-        },
       ],
     },
     {

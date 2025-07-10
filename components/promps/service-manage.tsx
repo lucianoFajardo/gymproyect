@@ -56,8 +56,18 @@ export function ServiceListTable() {
     const [selectedServiceForPaid, setSelectedServiceForPaid] = useState<ServicesModel | null>();
     const [isPaidDialogOpen, setIsPaidDialogOpen] = useState(false);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-
     const [serviceToEdit, setServiceToEdit] = useState<ServicesModel | undefined>();
+
+    const handleChangeState = (value: ServicesModel) => {
+        setServices((prev) => prev?.map((p) =>
+            p.id === value.id ? {
+                ...p, dueDate: value.dueDate,
+                serviceName: value.serviceName,
+                serviceCost: value.serviceCost,
+                paymentFrequency: value.paymentFrequency
+            }
+                : p));
+    }
 
     const handleEdit = (value: ServicesModel) => {
         setServiceToEdit(value);
@@ -192,16 +202,16 @@ export function ServiceListTable() {
                     </div>
                 </div>
             </CardHeader>
-            <div className="rounded-md border overflow-x-auto m-2">
+            <div className="rounded-md border-lg overflow-x-auto m-2">
                 <Table>
                     <TableHeader>
-                        <TableRow>
-                            <TableHead>Nombre</TableHead>
-                            <TableHead>Costo</TableHead>
-                            <TableHead>Próximo Vencimiento</TableHead>
-                            <TableHead>Estado de Vencimiento</TableHead>
-                            <TableHead>Frecuencia</TableHead>
-                            <TableHead className="text-right">Acciones</TableHead>
+                        <TableRow className="bg-emerald-600 pointer-events-none">
+                            <TableHead className="text-white">Nombre</TableHead>
+                            <TableHead className="text-white" >Costo</TableHead>
+                            <TableHead className="text-white">Próximo Vencimiento</TableHead>
+                            <TableHead className="text-white">Estado de Vencimiento</TableHead>
+                            <TableHead className="text-white">Frecuencia</TableHead>
+                            <TableHead className="text-right text-white">Acciones</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -215,7 +225,7 @@ export function ServiceListTable() {
                             services?.map((service) => {
                                 const dueDateInfo = getDueDateStatus(service.dueDate);
                                 return (
-                                    <TableRow key={service.id}>
+                                    <TableRow key={service.id} className="hover:bg-green-50">
                                         <TableCell className="font-medium">{service.serviceName}</TableCell>
                                         <TableCell className="">
                                             <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full  bg-purple-100 text-purple-800">
@@ -298,6 +308,7 @@ export function ServiceListTable() {
                     onOpenChange={setIsDialogOpen}
                     service={serviceToEdit}
                     onUpdateService={handleEdit}
+                    onChangeState={handleChangeState}
                 />
             )}
 

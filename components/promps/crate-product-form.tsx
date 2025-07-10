@@ -27,10 +27,11 @@ type ProductFormData = z.infer<typeof productSchema>;
 
 export default function CreateProductForm() {
     useEffect(() => {
-        getAllCategoriesAction().then(data => setProductCategories(data))
+        getAllCategoriesAction()
+            .then(data => setProductCategories(data))
+            .catch(error => { throw new Error("Error al cargar las categorías: " + error.message) });
         setIsLoading(false);
-    }
-        , [])
+    }, [])
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [productCategories, setProductCategories] = useState<Category[]>([]);
@@ -49,11 +50,7 @@ export default function CreateProductForm() {
     const onSubmit = async (data: ProductFormData) => {
         setIsSubmitting(true);
         toast.info("Creando producto...", { description: "Por favor espera." });
-        console.log("Datos del producto:", data);
-
-        const res = await createProductAction(data);
-        console.log("Respuesta de la acción:", res);
-
+        await createProductAction(data);
         setTimeout(() => {
             toast.success("Producto creado (simulado)", { description: `El producto "${data.nameProduct}" ha sido añadido.` });
             reset();

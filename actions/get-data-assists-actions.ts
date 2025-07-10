@@ -2,20 +2,50 @@
 import { db } from "@/lib/db";
 import { AssistanceRecord } from "@/Model/Register-Assists-model";
 
-export async function getAllDataAssistsActions(): Promise<AssistanceRecord[]> {
+export async function getAllDataAssistsActions(
+    {
+        page = 1,
+        pageSize = 10,
+        fromDate,
+        toDate,
+    }: { page?: number; pageSize?: number; fromDate?: Date; toDate?: Date }
+) {
     try {
-        const assistsDb = await db.assists.findMany({
-            select: {
-                id: true,
-                date: true,
-                client: {
-                    select: {
-                        name: true,
-                        gmail: true,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const where: any = {};
+        if (fromDate && toDate) {
+            where.createdAt = {
+                gte: new Date(fromDate.setHours(0, 0, 0, 0)),
+                lte: new Date(toDate.setHours(23, 59, 59, 999)),
+            };
+        } else if (fromDate) {
+            where.createdAt = {
+                gte: new Date(fromDate.setHours(0, 0, 0, 0)),
+            };
+        } else if (toDate) {
+            where.createdAt = {
+                lte: new Date(toDate.setHours(23, 59, 59, 999)),
+            };
+        }
+        const [assistsDb, totalCount] = await Promise.all([
+            db.assists.findMany({
+                where,
+                select: {
+                    id: true,
+                    date: true,
+                    client: {
+                        select: {
+                            name: true,
+                            gmail: true,
+                        }
                     }
-                }
-            }
-        });
+                },
+                skip: (page - 1) * pageSize,
+                take: pageSize,
+                orderBy: { date: "desc" }
+            }),
+            db.assists.count({ where }),
+        ])
         //? Parseo la informacion de la base de datos en mi modelo de asistencias y lo puedo enviar
         const parsedAssists: AssistanceRecord[] = assistsDb.map(assist => {
             return {
@@ -25,16 +55,11 @@ export async function getAllDataAssistsActions(): Promise<AssistanceRecord[]> {
                 date: new Date(assist.date)
             }
         });
-
-        if(parsedAssists.length === 0){
-            console.error("No se encontraron registros de asistencia.");
-            return []; //* como no tengo datos no puedo retornar nada, retorno un array vacio
+        return {
+            assists: parsedAssists,
+            totalCount, //? Total de registros encontrados
         }
-
-        return parsedAssists;
-
-    } catch (error) {
-        console.error("Error al obtener los registros de asistencia:", error);
-        throw new Error("No se pudieron obtener los registros de asistencia.");
+    } catch (_) {
+        throw new Error("No se pudieron obtener los registros de asistencia."+ _);
     }
 }

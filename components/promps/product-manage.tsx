@@ -32,7 +32,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Edit, Trash2, ChevronLeft, ChevronRight, PackageSearch, PlusCircle, Divide, PackagePlus } from 'lucide-react';
+import { Edit, Trash2, ChevronLeft, ChevronRight, PackageSearch, PlusCircle, Divide, PackagePlus, Circle, AlertCircleIcon, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -48,6 +48,7 @@ import { deleteProductsAction } from '@/actions/delete-products-action';
 import { AlertDialogModalProps } from '@/components/promps/alert-dialog-modal';
 import { Separator } from '@/components/ui/separator';
 import { ProductDialogModal } from '@/components/promps/product-dialog-modal';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 const ITEMS_PER_PAGE = 10;
 export default function ManageProducts() {
@@ -62,6 +63,15 @@ export default function ManageProducts() {
     const [selectProductDialog, setSelectProductDialog] = useState<Product | null>(null);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>();
 
+    const handleUpdateProductStock = (productId: string, addedQuantity: number) => {
+        setProducts((prev) =>
+            prev.map((p) =>
+                p.id === productId
+                    ? { ...p, stockProduct: p.stockProduct + addedQuantity }
+                    : p
+            )
+        );
+    };
     type productFormData = z.infer<typeof productSchema>; //* el esquema que tengo de validacion el zod
 
     const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm<productFormData>({
@@ -149,6 +159,7 @@ export default function ManageProducts() {
                             ...p,
                             ...res.data,
                             descriptionProduct: res.data.descriptionProduct ?? "",
+                            stockProduct: res.data.stockProduct,
                         }
                         : p
                 ));
@@ -190,7 +201,7 @@ export default function ManageProducts() {
                     </div>
                 </CardHeader>
                 <CardContent className="pt-6">
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto rounded-lg">
                         <Table>
                             <TableCaption>
                                 {products.length === 0
@@ -198,19 +209,19 @@ export default function ManageProducts() {
                                     : `Mostrando ${paginatedProducts.length} de ${products.length} productos. Página ${currentPage} de ${totalPages}.`}
                             </TableCaption>
                             <TableHeader>
-                                <TableRow>
-                                    <TableHead className="w-[250px]">Nombre</TableHead>
-                                    <TableHead>Categoría</TableHead>
-                                    <TableHead className="text-right">Precio unitario</TableHead>
-                                    <TableHead className="text-right">Stock</TableHead>
-                                    <TableHead className='text-center'>Última Modificación</TableHead>
-                                    <TableHead className="text-center">Acciones</TableHead>
+                                <TableRow className='bg-emerald-600 pointer-events-none'>
+                                    <TableHead className="w-[250px] text-white">Nombre</TableHead>
+                                    <TableHead className='text-white'>Categoría</TableHead>
+                                    <TableHead className="text-right text-white">Precio unitario</TableHead>
+                                    <TableHead className="text-right text-white">Stock</TableHead>
+                                    <TableHead className='text-center text-white'>Última Modificación</TableHead>
+                                    <TableHead className="text-center text-white">Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {paginatedProducts.length > 0 ? (
                                     paginatedProducts.map((product) => (
-                                        <TableRow key={product.id}>
+                                        <TableRow key={product.id} className='hover:bg-green-50'>
                                             <TableCell className="font-medium">
                                                 <span>{product.nameProduct}</span>
                                             </TableCell>
@@ -222,9 +233,13 @@ export default function ManageProducts() {
                                             <TableCell className="text-right">${product.priceProduct.toLocaleString('es-CL')}</TableCell>
                                             <TableCell className="text-right">
                                                 <span>
-                                                    {product.stockProduct >= 5 ?
-                                                        <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">{product.stockProduct}</span>
-                                                        : <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">{product.stockProduct}</span>}
+                                                    {product.stockProduct > 5 ?
+                                                        <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">{product.stockProduct}
+                                                            <CheckCircle2 className="inline-block ml-1 h-4 w-4 text-green-600" />
+                                                        </span>
+                                                        : <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">{product.stockProduct}
+                                                            <AlertCircleIcon className="inline-block ml-1 h-4 w-4 text-red-600" />
+                                                        </span>}
                                                 </span>
                                             </TableCell>
                                             <TableCell className="text-center">
@@ -234,19 +249,46 @@ export default function ManageProducts() {
                                             </TableCell>
                                             <TableCell className="text-center">
                                                 <div className="flex justify-center gap-2">
-                                                    <Button variant="outline" size="icon" onClick={() => handleEdit(product)}>
-                                                        <Edit className="h-4 w-4" />
-                                                        <span className="sr-only">Editar</span>
-                                                    </Button>
-                                                    <Button variant="destructive" size="icon" onClick={() => handleDelete(product)}>
-                                                        <Trash2 className="h-4 w-4" />
-                                                        <span className="sr-only">Eliminar</span>
-                                                    </Button>
-                                                    <Separator orientation="vertical">|</Separator>
-                                                    <Button variant="default" size="icon" onClick={() => handleSelect(product)}>
-                                                        <PackagePlus className="h-4 w-4" />
-                                                        <span className="sr-only">Agregar</span>
-                                                    </Button>
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <Button variant="outline" size="icon" onClick={() => handleEdit(product)} >
+                                                                    <Edit className="h-4 w-4" />
+                                                                    <span className="sr-only">Editar</span>
+                                                                </Button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>
+                                                                <p>Editar producto</p>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <Button variant="destructive" size="icon" onClick={() => handleDelete(product)}>
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                    <span className="sr-only">Eliminar</span>
+                                                                </Button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>
+                                                                <p>Eliminar producto</p>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                    <Separator orientation="vertical" className="h-6" />
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <Button variant="default" size="icon" onClick={() => handleSelect(product)}>
+                                                                    <PackagePlus className="h-4 w-4" />
+                                                                    <span className="sr-only">Agregar</span>
+                                                                </Button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>
+                                                                <p>Agregar producto</p>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -288,6 +330,7 @@ export default function ManageProducts() {
                     )}
                 </CardContent>
             </Card>
+            
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                 <DialogContent className="sm:max-w-[525px]">
                     <DialogHeader>
@@ -344,6 +387,7 @@ export default function ManageProducts() {
                 </DialogContent>
             </Dialog>
 
+            {/* Alert dialog para eliminar los datos */}
             <AlertDialogModalProps
                 title='Eliminar Producto'
                 confirmText='Sí, eliminar'
@@ -352,6 +396,8 @@ export default function ManageProducts() {
                 onOpenChange={setIsDeleteDialogOpen}
                 description={`Esta acción no se puede deshacer. Se eliminará permanentemente el producto (${selectedProduct?.nameProduct}) del inventario.`}
             />
+
+            {/* Dialog para mostrar los detalles del producto */}
             {
                 selectProductDialog && (
                     <ProductDialogModal
@@ -361,6 +407,7 @@ export default function ManageProducts() {
                             setSelectProductDialog(null)
                         }}
                         product={selectProductDialog}
+                        onStockUpdate={handleUpdateProductStock} //* Callback para actualizar el stock del producto
                     />
                 )
             }

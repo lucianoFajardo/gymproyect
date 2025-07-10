@@ -1,9 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use server'
 import { db } from "@/lib/db";
 import { SubscriptionPlanModel } from "@/Model/Subscription-Plan-model";
-import { UserModel } from "@/Model/User-model"; // Importa ambas interfaces
+import { UserModel } from "@/Model/User-model";
 
-export async function getDataUserAction(): Promise<UserModel[]> {
+export async function getDataUserAction({ page = 1, pageSize = 10 }: {
+    page?: number;
+    pageSize?: number;
+}) {
     try {
         const usersFromDb = await db.createClientModel.findMany({
             select: {
@@ -15,15 +19,27 @@ export async function getDataUserAction(): Promise<UserModel[]> {
                 gmail: true,
                 startPlan: true,
                 statusPlan: true,
-                subscriptionPlan: { // Esto ya selecciona los campos que necesitas del plan
+                subscriptionPlan: {
                     select: {
-                        id: true, // Descomenta si necesitas el ID del plan en el frontend
+                        id: true,
                         namePlan: true,
                         durationDaysPlan: true,
                         price: true,
                     }
                 },
                 createdAt: true,
+            },
+            skip: (page - 1) * pageSize,
+            take: pageSize,
+            orderBy: { createdAt: "desc" }, // Ordenar por fecha de creación
+        });
+
+        // 2. Contar el total de usuarios
+        const totalUsers = await db.createClientModel.count({
+            where: {
+                subscriptionPlan: { // Ajusta este filtro si es necesario para llamar los datos
+                    NOT: undefined
+                }
             }
         });
 
@@ -31,7 +47,6 @@ export async function getDataUserAction(): Promise<UserModel[]> {
         const formattedUsers: UserModel[] = usersFromDb.map(user => {
             // Construir el objeto subscriptionPlan para el UserModel
             let planInfo: SubscriptionPlanModel | null = null;
-
             if (user.subscriptionPlan) {
                 planInfo = {
                     id: user.subscriptionPlan.id ? String(user.subscriptionPlan.id) : "", // Convertir a string
@@ -40,7 +55,6 @@ export async function getDataUserAction(): Promise<UserModel[]> {
                     price: user.subscriptionPlan.price, // Mantener como número
                 };
             }
-
             return {
                 id: String(user.id),
                 name: String(user.name),
@@ -55,69 +69,80 @@ export async function getDataUserAction(): Promise<UserModel[]> {
                 subscriptionPlan: planInfo, // Asignar el objeto del plan (o null)
             };
         });
-
-        // No necesitas la verificación de !parsedUsers, findMany devuelve [] si no hay resultados
-        if (formattedUsers.length === 0) {
-            return[];
+        return {
+            users: formattedUsers,
+            total: totalUsers, // Total de usuarios
         }
-
-        return formattedUsers;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_) {
         throw new Error("Error al obtener los datos de los usuarios");
     }
 }
 
-//! NOTA: Aqui se crea una función adicional para obtener los datos de los usuarios con suscripciones, 
-export async function getDataUserActionWithSubscription() {
+//* NOTA: Aqui se crea una función adicional para obtener los datos de los usuarios con suscripciones, 
+export async function getDataUserActionWithSubscription({
+    page = 1,
+    pageSize = 10,
+}: {
+    page?: number;
+    pageSize?: number;
+}) {
     try {
+        // 1. Traer los usuarios paginados
         const usersFromDbSubscription = await db.createClientModel.findMany({
             select: {
                 id: true,
                 name: true,
                 startPlan: true,
-                subscriptionPlan: { // Esto ya selecciona los campos que necesitas del plan
+                subscriptionPlan: {
                     select: {
-                        id: true, // Descomenta si necesitas el ID del plan en el frontend
+                        id: true,
                         namePlan: true,
                         durationDaysPlan: true,
                         price: true,
                     }
                 },
                 createdAt: true,
+            },
+            skip: (page - 1) * pageSize,
+            take: pageSize,
+            orderBy: { createdAt: "desc" },
+        });
+
+        // 2. Contar el total de usuarios con suscripción
+        const total = await db.createClientModel.count({
+            where: {
+                subscriptionPlan: { // Ajusta este filtro si es necesario para llamar los datos
+                    NOT: undefined
+                }
             }
         });
 
         // Mapear los datos a la estructura de UserModel
         const formattedUsers = usersFromDbSubscription.map(user => {
-            // Construir el objeto subscriptionPlan para el UserModel
             let planInfo: SubscriptionPlanModel | null = null;
             if (user.subscriptionPlan) {
                 planInfo = {
-                    id: user.subscriptionPlan.id ? String(user.subscriptionPlan.id) : "", // Convertir a string
+                    id: user.subscriptionPlan.id ? String(user.subscriptionPlan.id) : "",
                     name: user.subscriptionPlan.namePlan,
-                    durationDaysPlan: user.subscriptionPlan.durationDaysPlan, // Mantener como número
-                    price: user.subscriptionPlan.price, // Mantener como número
+                    durationDaysPlan: user.subscriptionPlan.durationDaysPlan,
+                    price: user.subscriptionPlan.price,
                 };
             }
             return {
                 id: String(user.id),
                 name: String(user.name),
-                startPlan: user.startPlan ? user.startPlan.toISOString() : "", // Convertir Date a string ISO
-                price: user.subscriptionPlan ? String(user.subscriptionPlan.price) : "", // Convertir a string
-                createdAt: user.createdAt ? user.createdAt.toISOString() : "", // Convertir Date a string ISO
-                subscriptionPlan: planInfo, // Asignar el objeto del plan (o null)
+                startPlan: user.startPlan ? user.startPlan.toISOString() : "",
+                price: user.subscriptionPlan ? String(user.subscriptionPlan.price) : "",
+                createdAt: user.createdAt ? user.createdAt.toISOString() : "",
+                subscriptionPlan: planInfo,
             };
         });
 
-        // No necesitas la verificación de !parsedUsers, findMany devuelve [] si no hay resultados
-        if (formattedUsers.length === 0) {
-            return [];
+        return {
+            users: formattedUsers,
+            total, // total de usuarios con suscripción
         }
-
-        return formattedUsers;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_) {
-        return [];
+        throw new Error("Error al obtener los datos de los usuarios con suscripción");
     }
 }
