@@ -39,9 +39,6 @@ export default function CreateCategoriesForm() {
                     description: `La categoría "${data.nameCategory}" ha sido creada exitosamente.`,
                 });
                 reset(); 
-                toast.error("Error al Crear Categoría", {
-                    description: result.message || "No se pudo crear la categoría. Inténtalo de nuevo.",
-                });
             }
         } catch (error) {
             console.error("Error al enviar el formulario de categoría:", error);

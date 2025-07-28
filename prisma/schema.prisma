@@ -82,30 +82,32 @@ model SubscriptionPlan {
 }
 
 model CreateClientModel {
-  id                 String            @id @default(cuid())
-  name               String
-  lastname           String
-  phone              String
-  age                String
-  gmail              String
-  startPlan          DateTime          @default(now())
-  statusPlan         String
-  subscriptionPlanId String? // Permitir valores nulos
-  subscriptionPlan   SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id]) // Relación opcional
-  methodpay          String
-  createDateAt       DateTime          @default(now())
-  updateDateAt       DateTime          @updatedAt
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
-  assists            Assists[]
+  id                  String                @id @default(cuid())
+  name                String
+  lastname            String
+  phone               String
+  age                 String
+  gmail               String
+  startPlan           DateTime              @default(now())
+  statusPlan          String
+  subscriptionPlanId  String? // Permitir valores nulos
+  subscriptionPlan    SubscriptionPlan?     @relation(fields: [subscriptionPlanId], references: [id]) // Relación opcional
+  methodpay           String
+  createDateAt        DateTime              @default(now())
+  updateDateAt        DateTime              @updatedAt
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  assists             Assists[]
+  PaymentSubscription PaymentSubscription[]
 }
 
 model Assists {
-  id        String            @id @default(cuid())
-  clientId  String
-  date      DateTime          @default(now())
-  createdAt DateTime          @default(now())
-  client    CreateClientModel @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  id            String            @id @default(cuid())
+  clientId      String
+  admissionDate DateTime          @default(now())
+  exitDate      DateTime
+  createdAt     DateTime          @default(now())
+  client        CreateClientModel @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@index([clientId])
 }
@@ -174,4 +176,16 @@ model ProductSale {
   totalPay  Int
   createAt  DateTime @default(now())
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model PaymentSubscription {
+  id String @id @default(cuid())
+  paymentDate       DateTime          @default(now())
+  amountPaid        Int
+  paymentMethodUsed String?
+  clientId          String
+  client            CreateClientModel @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  @@index([clientId])
 }

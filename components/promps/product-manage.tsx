@@ -32,7 +32,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Edit, Trash2, ChevronLeft, ChevronRight, PackageSearch, PlusCircle, Divide, PackagePlus, Circle, AlertCircleIcon, CheckCircle2 } from 'lucide-react';
+import { Edit, Trash2, ChevronLeft, ChevronRight, PackageSearch, PlusCircle, Divide, PackagePlus, Circle, AlertCircleIcon, CheckCircle2, CalendarDays, CheckCircle, Replace } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -49,6 +49,7 @@ import { AlertDialogModalProps } from '@/components/promps/alert-dialog-modal';
 import { Separator } from '@/components/ui/separator';
 import { ProductDialogModal } from '@/components/promps/product-dialog-modal';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 
 const ITEMS_PER_PAGE = 10;
 export default function ManageProducts() {
@@ -230,7 +231,11 @@ export default function ManageProducts() {
                                                     {product.nameCategoryProduct || 'N/A'}
                                                 </span>
                                             </TableCell>
-                                            <TableCell className="text-right">${product.priceProduct.toLocaleString('es-CL')}</TableCell>
+                                            <TableCell className="text-right">
+                                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                    ${product.priceProduct.toLocaleString('es-CL')}
+                                                </span>
+                                            </TableCell>
                                             <TableCell className="text-right">
                                                 <span>
                                                     {product.stockProduct > 5 ?
@@ -247,49 +252,31 @@ export default function ManageProducts() {
                                                     {new Date(product.updateAtProduct!).toLocaleDateString('es-CL')}
                                                 </span>
                                             </TableCell>
-                                            <TableCell className="text-center">
-                                                <div className="flex justify-center gap-2">
-                                                    <TooltipProvider>
-                                                        <Tooltip>
-                                                            <TooltipTrigger asChild>
-                                                                <Button variant="outline" size="icon" onClick={() => handleEdit(product)} >
-                                                                    <Edit className="h-4 w-4" />
-                                                                    <span className="sr-only">Editar</span>
-                                                                </Button>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>
-                                                                <p>Editar producto</p>
-                                                            </TooltipContent>
-                                                        </Tooltip>
-                                                    </TooltipProvider>
-                                                    <TooltipProvider>
-                                                        <Tooltip>
-                                                            <TooltipTrigger asChild>
-                                                                <Button variant="destructive" size="icon" onClick={() => handleDelete(product)}>
-                                                                    <Trash2 className="h-4 w-4" />
-                                                                    <span className="sr-only">Eliminar</span>
-                                                                </Button>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>
-                                                                <p>Eliminar producto</p>
-                                                            </TooltipContent>
-                                                        </Tooltip>
-                                                    </TooltipProvider>
-                                                    <Separator orientation="vertical" className="h-6" />
-                                                    <TooltipProvider>
-                                                        <Tooltip>
-                                                            <TooltipTrigger asChild>
-                                                                <Button variant="default" size="icon" onClick={() => handleSelect(product)}>
-                                                                    <PackagePlus className="h-4 w-4" />
-                                                                    <span className="sr-only">Agregar</span>
-                                                                </Button>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>
-                                                                <p>Agregar producto</p>
-                                                            </TooltipContent>
-                                                        </Tooltip>
-                                                    </TooltipProvider>
-                                                </div>
+                                            <TableCell className="text-right">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="outline" size="icon">
+                                                            <span className="sr-only">Acciones</span>
+                                                            {/* Puedes usar un icono de tres puntos */}
+                                                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                                                                <circle cx="4" cy="10" r="2" />
+                                                                <circle cx="10" cy="10" r="2" />
+                                                                <circle cx="16" cy="10" r="2" />
+                                                            </svg>
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem className='hover:bg-gray-100' onClick={() => handleEdit(product)}>
+                                                            <Edit className="h-4 w-4 mr-2 text-purple-600" /> Editar producto
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem className='hover:bg-gray-100' onClick={() => handleDelete(product)}>
+                                                            <Trash2 className="h-4 w-4 mr-2 text-red-600" /> Eliminar producto
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem className='hover:bg-gray-100' onClick={() => handleSelect(product)}>
+                                                            <PackagePlus className="h-4 w-4 mr-2 text-emerald-600" /> Agregar producto
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
                                             </TableCell>
                                         </TableRow>
                                     ))
@@ -330,7 +317,7 @@ export default function ManageProducts() {
                     )}
                 </CardContent>
             </Card>
-            
+
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                 <DialogContent className="sm:max-w-[525px]">
                     <DialogHeader>

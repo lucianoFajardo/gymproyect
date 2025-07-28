@@ -42,31 +42,55 @@ export async function registerAssistsQrAction(userIdReaderQr: string, date: Date
                 isActive = true;
             }
         }
+
         if (!isActive) {
             return {
                 success: false,
                 message: `El usuario ${findeUser.name} no tiene un plan activo para esta fecha. Acceso denegado.`,
             };
         }
-        //         // 4. Opcional: Verificar si ya existe una asistencia para este usuario en esta fecha (para evitar duplicados en el mismo día)
-        // const todayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-        // const todayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
 
-        //* Crear la asistencia en la base de datos con el id del usuario y la fecha que proporcionamos
-        const newAssistance = await db.assists.create({
-            data: {
+        const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+        const dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+
+        const existingAssistance = await db.assists.findFirst({
+            where: {
                 clientId: findeUser.id,
-                date: date
+                admissionDate: {
+                    gte: dayStart,
+                    lte: dayEnd
+                }
             }
         });
-        return {
-            success: true,
-            message: `Asistencia registrada con éxito (vía QR). ${findeUser.name} ¡Bienvenido/a!`,
-            data: newAssistance,
-        };
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
+        if (!existingAssistance) {
+            const newAssist = await db.assists.create({
+                data: {
+                    clientId: findeUser.id,
+                    admissionDate: date,
+                    exitDate: date // Puedes ajustar esto si tienes una lógica diferente para exitDate
+                }
+            });
+            return {
+                success: true,
+                message: `Asistencia registrada con éxito (vía QR). ${findeUser.name} ¡Bienvenido/a!`,
+                data: newAssist,
+            }
+        } else {
+            const updatedAssistance = await db.assists.update({
+                where: { id: existingAssistance.id },
+                data: {
+                    exitDate: date // Actualizar la fecha de salida si ya existe una asistencia
+                }
+            });
+            return {
+                success: true,
+                message: `Salida registrada con éxito (vía QR). ${findeUser.name} ¡Hasta luego!`,
+                data: updatedAssistance,
+            }
+        }
     } catch (_) {
-        return { success: false, message: 'Error al registrar asistencia' };
+        return { success: false, message: 'Error al registrar asistencia' , _ };
     }
 
 

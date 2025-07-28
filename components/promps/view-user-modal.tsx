@@ -22,11 +22,21 @@ export function ViewUserModal({
 }: ViewUserModal) {
     const { Canvas } = useQRCode();
 
+    function formatPhoneForWhatsapp(phone: string) {
+        const clean = phone.replace(/\D/g, "");
+        if (clean.startsWith("569") && clean.length === 11) return clean;
+        if (clean.startsWith("9") && clean.length === 9) return "56" + clean;
+        if (clean.length === 8) return "569" + clean;
+        if (clean.startsWith("56") && clean.length === 11) return clean;
+        return clean;
+    }
+
     const handleShareWhatsApp = () => {
         const message = encodeURIComponent(
             `¡Hola ${data.name}! Aquí tienes tu código QR para ingresar al gimnasio. Bienvenido a nuestra comunidad.`
         );
-        window.open(`https://wa.me/?text=${message}`, "_blank");
+        window.open(`https://wa.me/${formatPhoneForWhatsapp(data.phone)}/?text=${message}`, "_blank");
+
     };
 
     return (
@@ -109,7 +119,6 @@ export function ViewUserModal({
                                     color: { dark: '#000000' },
                                 }}
                             />
-                            {/* TODO: Solucionar este error */}
                         </span>
                     </div>
                 </div>
@@ -128,7 +137,7 @@ export function ViewUserModal({
                     >
                         Descargar QR
                     </Button>
-                    <Button onClick={handleShareWhatsApp}  className="ml-2 bg-emerald-600 text-white hover:bg-green-600">
+                    <Button onClick={handleShareWhatsApp} className="ml-2 bg-emerald-600 text-white hover:bg-green-600">
                         Compartir por WhatsApp
                     </Button>
                     <Button onClick={onClose} className="ml-2">

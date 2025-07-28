@@ -48,7 +48,6 @@ export default function RegisterAssistsView() {
             const response = await registerAssistsQrAction(qrValueId, dataNow);
             if (response.success) {
                 toast.success(response.message);
-
             } else {
                 toast.error("Error al registrar la asistencia , " + response.message);
             }

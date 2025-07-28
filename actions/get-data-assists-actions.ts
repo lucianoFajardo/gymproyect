@@ -32,7 +32,8 @@ export async function getAllDataAssistsActions(
                 where,
                 select: {
                     id: true,
-                    date: true,
+                    admissionDate: true,
+                    exitDate: true,
                     client: {
                         select: {
                             name: true,
@@ -42,7 +43,7 @@ export async function getAllDataAssistsActions(
                 },
                 skip: (page - 1) * pageSize,
                 take: pageSize,
-                orderBy: { date: "desc" }
+                orderBy: { admissionDate: "desc" }
             }),
             db.assists.count({ where }),
         ])
@@ -52,7 +53,8 @@ export async function getAllDataAssistsActions(
                 id: String(assist.id),
                 userName: String(assist.client.name || ""),
                 gmailUser: String(assist.client.gmail || ""),
-                date: new Date(assist.date)
+                admissionDate: new Date(assist.admissionDate),
+                exitDate: new Date(assist.exitDate),
             }
         });
         return {

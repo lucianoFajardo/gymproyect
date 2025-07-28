@@ -1,11 +1,9 @@
 "use client"
 
-//TODO : -> aqui mañana optimizar lo mas posible este codigo de aqui para poder mejorarlo de alguna manera
-
 import { useEffect, useState } from "react"
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, Edit, EyeIcon, Mail, Phone, PlusCircle, Trash, UserSearch } from "lucide-react"
+import { ChevronLeft, ChevronRight, EditIcon, EyeIcon, Mail, Phone, PlusCircle, Trash2, UserSearch } from "lucide-react"
 import { getDataUserAction } from "@/actions/get-data-user-action"
 import { UserModel } from "../../Model/User-model"
 import checkSubscriptionExpiration from "@/actions/expiration-subscription-action"
@@ -17,6 +15,8 @@ import Link from "next/link"
 import { ViewUserModal } from "./view-user-modal"
 import { AlertDialogModalProps } from "./alert-dialog-modal"
 import { UpdateUserModal } from "./update-user-modal"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip"
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@radix-ui/react-dropdown-menu"
 
 export default function UserTable() {
     const ITEMS_PER_PAGE = 20; // Define cuántos usuarios mostrar por página
@@ -56,8 +56,17 @@ export default function UserTable() {
     // Nuevos estados para el diálogo de "ver detalles"
     const [isViewDetailsDialogOpen, setIsViewDetailsDialogOpen] = useState(false);
     const [viewingUser, setViewingUser] = useState<UserModel | null>(null);
-    
+
     const [userToEdit, setUserToEdit] = useState<UserModel | null>(null);
+
+    function formatPhoneForWhatsapp(phone: string) {
+        const clean = phone.replace(/\D/g, "");
+        if (clean.startsWith("569") && clean.length === 11) return clean;
+        if (clean.startsWith("9") && clean.length === 9) return "56" + clean;
+        if (clean.length === 8) return "569" + clean;
+        if (clean.startsWith("56") && clean.length === 11) return clean;
+        return clean;
+    }
 
     const handleChangeState = (value: UserModel) => {
         setUsers(prev => prev.map(
@@ -128,16 +137,16 @@ export default function UserTable() {
             return;
         }
         try {
-            const res = await deleteDataUserAction(SelectedToDeleted.id); // Llamar a la función de eliminación
+            const res = await deleteDataUserAction(SelectedToDeleted.id);
             if (res.success) {
                 // Actualizar el estado de usuarios eliminando el usuario eliminado
-                setUsers((prevUsers) => prevUsers.filter((user) => user.id !== SelectedToDeleted.id));
                 setIsDeleteDialogOpen(false);
                 setSelectedToDeleted(undefined); // Limpiar el usuario seleccionado para eliminar
                 toast.success("Usuario eliminado", {
                     description: "El usuario ha sido eliminado correctamente.",
                     duration: 5000,
                 });
+                setUsers((prevUsers) => prevUsers.filter((user) => user.id !== SelectedToDeleted.id));
             } else {
                 toast.error("Error al eliminar usuario", {
                     description: "No se pudo eliminar el usuario, por favor intente nuevamente.",
@@ -163,7 +172,7 @@ export default function UserTable() {
     }
 
     return (
-        <Card className="rounded-md border overflow-x-auto m-2">
+        <Card className="rounded-md border overflow-x-auto m-2 border-gray-200 dark:border-gray-700">
             <CardHeader className="border-b">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
@@ -178,7 +187,7 @@ export default function UserTable() {
                     </Link>
                 </div>
             </CardHeader>
-            <div className="rounded-lg overflow-x-auto m-2">
+            <div className="rounded-lg overflow-x-auto m-4">
                 <Table>
                     <TableCaption>Lista de usuarios disponibles.</TableCaption>
                     <TableHeader>
@@ -203,14 +212,30 @@ export default function UserTable() {
                             </TableRow>
                         ) : (
                             users.map((user) => (
-                                <TableRow key={user.id} className="hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                                <TableRow key={user.id} className="hover:bg-green-50 dark:hover:bg-gray-800 transition-colors ">
                                     <TableCell className="font-medium">{user.name}</TableCell>
                                     <TableCell>{user.lastname}</TableCell>
                                     <TableCell>
-                                        <Badge className="bg-gray-200 text-gray-800 dark:bg-green-600 dark:text-green-200">
-                                            <Phone />
-                                            {user.phone}
-                                        </Badge>
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <a
+                                                        href={`https://wa.me/${formatPhoneForWhatsapp(user.phone)}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center gap-1 hover:underline"
+                                                    >
+                                                        <Badge className="bg-gray-200 text-gray-800 dark:bg-green-600 dark:text-green-200 cursor-pointer">
+                                                            <Phone />
+                                                            {user.phone}
+                                                        </Badge>
+                                                    </a>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    Enviar WhatsApp
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
                                     </TableCell>
                                     <TableCell>
                                         <Badge className="bg-blue-400 text-white dark:bg-blue-600">
@@ -252,23 +277,42 @@ export default function UserTable() {
                                         )}
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <div className="flex justify-end gap-2">
-                                            {/* Aqui mostrar informacion mas detallada del usuario */}
-                                            <Button variant="outline" size="icon" onClick={() => handleViewDetails(user)}>
-                                                <EyeIcon className="h-4 w-4" />
-                                                <span className="sr-only">Ver</span>
-                                            </Button>
-                                            <Button variant="outline" size="icon" onClick={() => handleToEdit(user)}>
-                                                <Edit className="h-4 w-4" />
-                                                <span className="sr-only">Editar</span>
-                                            </Button>
-                                            <Button variant="destructive" size="icon" onClick={() => { handleToDeleted(user) }}>
-                                                <Trash className="h-4 w-4" />
-                                                <span className="sr-only">Eliminar</span>
-                                            </Button>
-                                        </div>
+                                        <DropdownMenu  >
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="outline" size="icon">
+                                                    <span className="sr-only">Acciones</span>
+                                                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                                                        <circle cx="4" cy="10" r="2" />
+                                                        <circle cx="10" cy="10" r="2" />
+                                                        <circle cx="16" cy="10" r="2" />
+                                                    </svg>
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="bg-white dark:bg-gray-900 shadow-lg rounded-md">
+                                                <DropdownMenuItem
+                                                    className="hover:bg-gray-100 flex items-center gap-2 py-2 px-3"
+                                                    onClick={() => handleViewDetails(user)}
+                                                >
+                                                    <EyeIcon className="h-4 w-4 text-purple-600" />
+                                                    <span>Ver detalles</span>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    className="hover:bg-gray-100 flex items-center gap-2 py-2 px-3"
+                                                    onClick={() => handleToEdit(user)}
+                                                >
+                                                    <EditIcon className="h-4 w-4 text-blue-600" />
+                                                    <span>Editar usuario</span>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    className="hover:bg-gray-100 flex items-center gap-2 py-2 px-3"
+                                                    onClick={() => { handleToDeleted(user) }}
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-gray-600" />
+                                                    <span>Eliminar usuario</span>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </TableCell>
-
                                 </TableRow>
                             ))
                         )}

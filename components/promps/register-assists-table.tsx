@@ -115,7 +115,8 @@ export default function RegisterAssistsTable() {
                         <TableHeader>
                             <TableRow className="bg-emerald-600 pointer-events-none">
                                 <TableHead className="w-[200px] text-white font-semibold">Nombre Usuario</TableHead>
-                                <TableHead className="text-white font-semibold">Fecha y Hora</TableHead>
+                                <TableHead className="text-white font-semibold">Fecha de ingreso</TableHead>
+                                <TableHead className="text-white font-semibold">Fecha de salida</TableHead>
                                 <TableHead className="text-white font-semibold">Correo electrónico</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -131,8 +132,15 @@ export default function RegisterAssistsTable() {
                                         </TableCell>
                                         <TableCell className="py-3 px-4">
                                             <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                                {format(assistance.date, 'Pp', { locale: es })}
+                                                {format(assistance.admissionDate, 'Pp', { locale: es })}
                                             </span>
+                                        </TableCell>
+                                        <TableCell>
+                                            {assistance.exitDate.getTime() === assistance.admissionDate.getTime()
+                                                ? <span className="text-yellow-600 font-semibold">Aún en el gimnasio</span>
+                                                : <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                                    {format(assistance.exitDate, 'Pp', { locale: es })} </span>
+                                            }
                                         </TableCell>
                                         <TableCell className="py-3 px-4">
                                             {assistance.gmailUser ? (

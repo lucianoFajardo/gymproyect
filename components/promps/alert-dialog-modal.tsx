@@ -23,7 +23,7 @@ export function AlertDialogModalProps({
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle>{title}</AlertDialogTitle>
-                    <AlertDialogDescription>
+                    <AlertDialogDescription className="text-sm  text-yellow-600 text-center px-2 py-1 bg-yellow-50 rounded-md">
                         {description}
                     </AlertDialogDescription>
                 </AlertDialogHeader>

@@ -18,7 +18,6 @@ import { ServicePaymentHistoryModal } from "./service-payment-history-modal";
 import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { ServicesModel } from "@/Model/Services-model";
 import { getAllDataServiceAction } from "@/actions/get-data-services-action";
-import { Separator } from "@radix-ui/react-separator";
 import { createPaymentServiceAction } from "@/actions/create-payment-services-action";
 import { toast } from "sonner";
 import { updateServicesPaymentAction } from "@/actions/update-services-action";
@@ -29,6 +28,7 @@ import { AlertDialogModalProps } from "./alert-dialog-modal";
 import { ServiceViewModal } from "./service-view-modal";
 import { getDueDateStatus } from "@/actions/expiration-service-action";
 import { EditServiceDialog } from "./update-service-modal";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
 
 export function ServiceListTable() {
     useEffect(() => {
@@ -143,11 +143,6 @@ export function ServiceListTable() {
         setIsViewDataServiceOpen(true);
     }
 
-    const handleDelete = (service: ServicesModel) => {
-        setSelectedServiceForDelete(service);
-        setIsDeleteDialogOpen(true);
-    }
-
     const handleConfirmDelete = async () => {
         if (!selectedServiceForDelete) {
             toast.error("No se ha seleccionado ningún servicio para eliminar.");
@@ -173,6 +168,8 @@ export function ServiceListTable() {
         getPaymentServicesAction().then(history => {
             const filteredHistory = history.filter(h => h.serviceId === service.id);
             setCurrentHistoryData(filteredHistory);
+        }).catch((error) => {
+            toast.error("Error al obtener el historial de pagos: " + error.message);
         });
         setIsHistoryModalOpen(true);
     };
@@ -249,29 +246,55 @@ export function ServiceListTable() {
                                             </span>
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <div className="flex justify-end items-center gap-2">
-                                                <Button variant="outline" size="icon" onClick={() => handleViewDetails(service)}>
-                                                    <EyeIcon className="h-4 w-4" />
-                                                    <span className="sr-only">Ver</span>
-                                                </Button>
-                                                <Button variant="outline" size="icon" onClick={() => handleEdit(service)}>
-                                                    <EditIcon className="h-4 w-4" />
-                                                    <span className="sr-only">Modificar</span>
-                                                </Button>
-                                                <Button variant="destructive" size="icon" onClick={() => handleDelete(service)}>
-                                                    <Trash2 className="h-4 w-4" />
-                                                    <span className="sr-only">Eliminar</span>
-                                                </Button>
-                                                <Button variant="default" size="icon" onClick={() => handleViewHistory(service)}>
-                                                    <History className="h-4 w-4" />
-                                                    <span className="sr-only">Ver pagos</span>
-                                                </Button>
-                                                <Separator orientation="vertical">|</Separator>
-                                                <Button variant="outline" size="icon" onClick={() => handlerPaid(service)}>
-                                                    <CheckCircle className="h-4 w-4" />
-                                                    <span className="sr-only">Activar Plan</span>
-                                                </Button>
-                                            </div>
+                                            <DropdownMenu  >
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="outline" size="icon">
+                                                        <span className="sr-only">Acciones</span>
+                                                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                                                            <circle cx="4" cy="10" r="2" />
+                                                            <circle cx="10" cy="10" r="2" />
+                                                            <circle cx="16" cy="10" r="2" />
+                                                        </svg>
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" className="bg-white dark:bg-gray-900 shadow-lg rounded-md">
+                                                    <DropdownMenuItem
+                                                        className="hover:bg-gray-100 flex items-center gap-2 py-2 px-3"
+                                                        onClick={() => handleViewDetails(service)}
+                                                    >
+                                                        <EyeIcon className="h-4 w-4 text-purple-600" />
+                                                        <span>Ver detalles</span>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        className="hover:bg-gray-100 flex items-center gap-2 py-2 px-3"
+                                                        onClick={() => handleEdit(service)}
+                                                    >
+                                                        <EditIcon className="h-4 w-4 text-blue-600" />
+                                                        <span>Editar servicio</span>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        className="hover:bg-gray-100 flex items-center gap-2 py-2 px-3"
+                                                        onClick={() => handleViewHistory(service)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4 text-red-600" />
+                                                        <span>Eliminar servicio</span>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        className="hover:bg-gray-100 flex items-center gap-2 py-2 px-3"
+                                                        onClick={() => handleViewHistory(service)}
+                                                    >
+                                                        <History className="h-4 w-4 text-gray-600" />
+                                                        <span>Ver historial</span>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        className="hover:bg-gray-100 flex items-center gap-2 py-2 px-3"
+                                                        onClick={() => handlerPaid(service)}
+                                                    >
+                                                        <CheckCircle className="h-4 w-4 text-green-600" />
+                                                        <span>Marcar como pagado</span>
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </TableCell>
                                     </TableRow>
                                 );

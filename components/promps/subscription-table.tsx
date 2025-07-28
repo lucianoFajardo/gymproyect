@@ -12,28 +12,24 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { CalendarDays, CalendarIcon, ChevronLeft, ChevronRight, Replace } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogClose } from "@/components/ui/dialog"
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { CalendarDays, CheckCircle, ChevronLeft, ChevronRight, History, Replace } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { getDataUserActionWithSubscription } from '@/actions/get-data-user-action';
 import { UserModel } from '@/Model/User-model';
 import checkSubscriptionExpiration from '@/actions/expiration-subscription-action';
-import { Label } from '../ui/label';
-import { editSubscriptionPlanAction } from '@/actions/edit-subsription-plan-action';
 import { toast } from 'sonner';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { SubscriptionPlanModel } from '@/Model/Subscription-Plan-model';
 import { getAllSubscriptionPlansAction } from '@/actions/get-subscription-plan-action';
-import { editPlanSubscriptionAction } from '@/actions/edit-plans-action';
-import { Calendar } from '../ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { es } from 'date-fns/locale';
+import { UpdateSubscriptionModal } from './update-subscription-modal';
+
+import { UpdateDatesSubscriptionModal } from './update-dates-subscriptions-modal';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { AlertDialogModalProps } from './alert-dialog-modal';
+import { createPaymentSubscriptionAction } from '@/actions/create-payment-subscription-action';
+import { SubscriptionHistoryPaymentModel } from '@/Model/Payment-subscription-model';
+import { getDataPaymentsSubscriptionAction } from '@/actions/get-data-payments-subscription-action';
+import { get } from 'http';
+import { HistoryModalPaymentSubs } from './history-modal-payment-subs';
 
 export default function UserSubscriptionManagerTable() {
     const ITEMS_PER_PAGE = 15;
@@ -41,15 +37,29 @@ export default function UserSubscriptionManagerTable() {
     const [dataUserSubscription, setDataUserSubscription] = useState<dataFlitred[]>([]);
     const [expireSubscription, setExpireSubscription] = useState<Record<string, string>>({});
     const [userStatusMap, setUserStatusMap] = useState<Record<string, string>>({});
+
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [currentUserToEdit, setCurrentUserToEdit] = useState<dataFlitred | null>(null);
-    const [newPaymentDate, setNewPaymentDate] = useState<Date>();
+
+    const [currentUserPayment, setCurrentUserPayment] = useState<dataFlitred | null>(null);
+    const [isPaidDialogOpen, setIsPaidDialogOpen] = useState(false);
+
+    const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+    const [currentHistoryData, setCurrentHistoryData] = useState<SubscriptionHistoryPaymentModel[] | null>(null);
+
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [totalUsers, setTotalUsers] = useState<number>(0);
-    const [isChangePlanDialogOpen, setIsChangePlanDialogOpen] = useState(false);
-    const [currentUserToChangePlan, setCurrentUserToChangePlan] = useState<dataFlitred | null>(null);
-    const [selectedPlanIdForChange, setSelectedPlanIdForChange] = useState<string | undefined>();
-    const [availablePlans, setAvailablePlans] = useState<SubscriptionPlanModel[]>([]);
+    const [_, setAvailablePlans] = useState<SubscriptionPlanModel[]>([]);
+
+    const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+    const [selectedUser, setSelectedUser] = useState<dataFlitred | null>(null);
+    const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlanModel | null>(null);
+
+    const handleOpenUpdateModal = (user: dataFlitred, plan: SubscriptionPlanModel) => {
+        setSelectedUser(user);
+        setSelectedPlan(plan);
+        setIsUpdateModalOpen(true);
+    };
 
     // Cargar planes solo una vez
     useEffect(() => {
@@ -107,78 +117,61 @@ export default function UserSubscriptionManagerTable() {
 
     const handleOpenEditDialogSubscription = (user: dataFlitred) => {
         setCurrentUserToEdit(user);
-        const currentStartPlanDate = user.startPlan ? new Date(user.startPlan) : new Date();
-        setNewPaymentDate(currentStartPlanDate);
         setIsEditDialogOpen(true);
     };
-    const handleCloseEditDialog = () => {
-        setIsEditDialogOpen(false);
-        setCurrentUserToEdit(null);
-    };
 
-    const handleSaveSubscription = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
+    const handlePaid = (user: dataFlitred) => {
+        setCurrentUserPayment(user);
+        setIsPaidDialogOpen(true);
+    }
+
+    const handleSavePaymentSubscription = async () => {
+        if (!currentUserPayment) return;
         try {
-            const formattedDate = new Date(String(newPaymentDate));
-            const updateSubscription = await editSubscriptionPlanAction({
-                userId: currentUserToEdit!.id,
-                startDate: formattedDate.toISOString()
-            });
-            if (!updateSubscription.success) {
-                toast.error("Error al actualizar la suscripción.");
+            const paymentData = {
+                id: currentUserPayment.id,
+                paymentServiceDate: new Date(),
+                paymentServiceAmount: currentUserPayment.subscriptionPlan!.price,
+                paymentServicetype: "N/A",
+                userId: currentUserPayment.id,
+            };
+            const response = await createPaymentSubscriptionAction(paymentData);
+            if (response.success) {
+                toast.success(response.message);
+                console.log("Pago de suscripción registrado:", response.data);
+                setIsPaidDialogOpen(false);
+                setCurrentUserPayment(null);
+                setDataUserSubscription((prev) =>
+                    prev.map((user) =>
+                        user.id === currentUserPayment!.id
+                            ? { ...user, startPlan: response.data?.newStartPlan ? new Date(response.data.newStartPlan).toISOString() : user.startPlan }
+                            : user
+                    )
+                );
             } else {
-                toast.success("Suscripción actualizada correctamente.");
-                setIsEditDialogOpen(false);
-                setCurrentUserToEdit(null);
-                // Refresca la página actual
-                getDataUserActionWithSubscription({ page: currentPage, pageSize: ITEMS_PER_PAGE }).then((data) => {
-                    setDataUserSubscription(data.users || []);
-                    setTotalUsers(data.total || 0);
-                });
+                toast.error(response.message);
             }
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (_) {
-            toast.error("Error al actualizar la suscripción.");
+        } catch (error) {
+            toast.error("Error al registrar el pago de la suscripción.");
         }
-    };
+    }
 
-    const handleOpenChangePlanDialog = (user: dataFlitred) => {
-        setCurrentUserToChangePlan(user);
-        setSelectedPlanIdForChange(user.subscriptionPlan?.id);
-        setIsChangePlanDialogOpen(true);
-    };
-
-    const handleCloseChangePlanDialog = () => {
-        setIsChangePlanDialogOpen(false);
-        setCurrentUserToChangePlan(null);
-        setSelectedPlanIdForChange(undefined);
-    };
-
-    const handleSavePlanChange = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        if (!currentUserToChangePlan || !selectedPlanIdForChange) {
-            toast.error("Por favor, selecciona un usuario y un nuevo plan.");
-            return;
-        }
-        try {
-            const updatePlan = await editPlanSubscriptionAction(currentUserToChangePlan.id, selectedPlanIdForChange);
-            if (!updatePlan.success) {
-                toast.error("Error al cambiar el plan.");
+    const handleViewPaymentHistory = async (userData: dataFlitred) => {
+        setIsHistoryModalOpen(true);
+        getDataPaymentsSubscriptionAction().then(data => {
+            const filtredData = data.filter(payment => payment.userId === userData.id);
+            if (filtredData.length === 0) {
+                toast.info("No hay historial de pagos para este usuario.");
+                setCurrentHistoryData([]);
                 return;
             }
-            toast.success("Plan cambiado correctamente.");
-            setIsChangePlanDialogOpen(false);
-            setCurrentUserToChangePlan(null);
-            setSelectedPlanIdForChange(undefined);
-            // Refresca la página actual
-            getDataUserActionWithSubscription({ page: currentPage, pageSize: ITEMS_PER_PAGE }).then((data) => {
-                setDataUserSubscription(data.users || []);
-                setTotalUsers(data.total || 0);
-            });
-        } catch (_) {
-            toast.error("Error interno al cambiar el plan.");
-        }
-    };
+            setCurrentHistoryData(filtredData);
+            console.log("Historial de pagos:", filtredData);
+        }).catch((error) => {
+            toast.error("Error al obtener el historial de pagos: " + error.message);
+        })
+    }
+
 
     return (
         <Card className="m-4">
@@ -247,32 +240,33 @@ export default function UserSubscriptionManagerTable() {
                                             )}
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <Button variant="outline" size="icon" className='m-1' onClick={() => handleOpenEditDialogSubscription(user)}>
-                                                            <CalendarDays className="h-4 w-4" />
-                                                            <span className="sr-only">Fechas de pago</span>
-                                                        </Button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        <p>Fechas de pago</p>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
-                                            <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <Button variant="default" size="icon" onClick={() => handleOpenChangePlanDialog(user)}>
-                                                            <Replace className="h-4 w-4" />
-                                                            <span className="sr-only">Cambiar plan</span>
-                                                        </Button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        <p>Cambiar Plan</p>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="outline" size="icon">
+                                                        <span className="sr-only">Acciones</span>
+                                                        {/* Puedes usar un icono de tres puntos */}
+                                                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                                                            <circle cx="4" cy="10" r="2" />
+                                                            <circle cx="10" cy="10" r="2" />
+                                                            <circle cx="16" cy="10" r="2" />
+                                                        </svg>
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem className='hover:bg-gray-100' onClick={() => handleOpenEditDialogSubscription(user)}>
+                                                        <CalendarDays className="h-4 w-4 mr-2 text-purple-600" /> Cambiar fechas de pago
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem className='hover:bg-gray-100' onClick={() => handleOpenUpdateModal(user, user.subscriptionPlan!)}>
+                                                        <Replace className="h-4 w-4 mr-2 text-blue-600" /> Cambiar plan
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem className='hover:bg-gray-100' onClick={() => handlePaid(user)}>
+                                                        <CheckCircle className="h-4 w-4 mr-2 text-emerald-600" /> Registrar pago
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem className='hover:bg-gray-100' onClick={() => handleViewPaymentHistory(user)}>
+                                                        <History className="h-4 w-4 mr-2 text-gray-600" /> Historial de pagos
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </TableCell>
                                     </TableRow>
                                 ))
@@ -280,7 +274,7 @@ export default function UserSubscriptionManagerTable() {
                         </TableBody>
                     </Table>
                 </div>
-                
+
                 {dataUserSubscription.length === 0 && (
                     <p className="text-center text-gray-500 mt-6 py-4">No hay usuarios para mostrar.</p>
                 )}
@@ -313,119 +307,71 @@ export default function UserSubscriptionManagerTable() {
                 )}
             </CardContent>
 
-            {/* Diálogo para editar la suscripción */}
-            {currentUserToEdit && (
-                <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                    <DialogContent className="max-w-2xl">
-                        <DialogHeader>
-                            <DialogTitle>Actualizar Suscripción de: {currentUserToEdit.name}</DialogTitle>
-                            <DialogDescription>
-                                {/* ...existing code... */}
-                            </DialogDescription>
-                        </DialogHeader>
-                        <form onSubmit={handleSaveSubscription}>
-                            <div className="grid gap-6 py-2">
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="paymentDate" className="text-right col-span-1">
-                                        Fecha de Pago
-                                    </Label>
-                                    <div className="col-span-3">
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <Button
-                                                    variant="outline"
-                                                    className="w-full justify-start text-left font-normal"
-                                                >
-                                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                                    {newPaymentDate
-                                                        ? newPaymentDate.toLocaleDateString()
-                                                        : "Seleccionar fecha"}
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0">
-                                                <Calendar
-                                                    locale={es}
-                                                    mode="single"
-                                                    selected={newPaymentDate}
-                                                    onSelect={setNewPaymentDate}
-                                                    initialFocus
-                                                    disabled={(date) => date > new Date()}
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
-                                    </div>
-                                </div>
-                                <p className="text-sm text-yellow-600 text-center px-2 py-1 bg-yellow-50 rounded-md">
-                                    Al guardar, la suscripción con la nueva fecha de pago, se actualizara en la base de datos reajustando la fecha automaticamente
-                                    tener en cuenta esto antes de actualizar la fecha.
-                                </p>
-                            </div>
-                            <DialogFooter>
-                                <DialogClose asChild>
-                                    <Button type="button" variant="outline" onClick={handleCloseEditDialog}>
-                                        Cancelar
-                                    </Button>
-                                </DialogClose>
-                                <Button type="submit">Guardar Cambios</Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
-            )}
+            {
+                // Modal para ver historial de pagos del usuario
+                isHistoryModalOpen && currentHistoryData && (
+                    <HistoryModalPaymentSubs
+                        isOpen={isHistoryModalOpen}
+                        onOpenChange={setIsHistoryModalOpen}
+                        data={currentHistoryData}
+                    />
+                )
+            }
 
-            {/* Diálogo para Cambiar Plan */}
-            {currentUserToChangePlan && (
-                <Dialog open={isChangePlanDialogOpen} onOpenChange={setIsChangePlanDialogOpen}>
-                    <DialogContent className="max-w-md">
-                        <DialogHeader>
-                            <DialogTitle>Cambiar Plan de: {currentUserToChangePlan.name}</DialogTitle>
-                            <DialogDescription>
-                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
-                                    Plan actual: {currentUserToChangePlan.subscriptionPlan?.name || "No asignado"}.
-                                </span>
-                            </DialogDescription>
-                        </DialogHeader>
-                        <form onSubmit={handleSavePlanChange}>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="changePlanSelect" className="text-right col-span-1">
-                                        Nuevo Plan
-                                    </Label>
-                                    <div className="col-span-3">
-                                        <Select
-                                            value={selectedPlanIdForChange}
-                                            onValueChange={setSelectedPlanIdForChange}
-                                        >
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Seleccionar un plan" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {availablePlans?.map((plan) => (
-                                                    <SelectItem key={plan.id} value={plan.id}>
-                                                        {plan.name} (${plan.price})
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-                            </div>
-                            <p className="text-sm m-4 text-yellow-600 text-center px-2 py-1 bg-yellow-50 rounded-md">
-                                Al guardar la suscripción con el nuevo plan , se actualizara en la base de datos
-                                y se modificara la fecha de pago automaticamente, tener en cuenta esto antes de actualizar el plan.
-                            </p>
-                            <DialogFooter>
-                                <DialogClose asChild>
-                                    <Button type="button" variant="outline" onClick={handleCloseChangePlanDialog}>
-                                        Cancelar
-                                    </Button>
-                                </DialogClose>
-                                <Button type="submit">Guardar Plan</Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
-            )}
+            {
+                // Modal para editar fechas de pago
+                currentUserToEdit && (
+                    <UpdateDatesSubscriptionModal
+                        isOpen={isEditDialogOpen}
+                        onOpenChange={setIsEditDialogOpen}
+                        user={currentUserToEdit}
+                        onChangeState={(newPaymentDate) => {
+                            setDataUserSubscription((prev) =>
+                                prev.map((user) =>
+                                    user.id === currentUserToEdit.id
+                                        ? { ...user, startPlan: newPaymentDate?.toISOString() || user.startPlan }
+                                        : user
+                                )
+                            );
+                        }}
+                    />
+                )
+            }
+
+            { // Modal para actualizar la suscripción
+                selectedUser && selectedPlan && (
+                    <UpdateSubscriptionModal
+                        isOpen={isUpdateModalOpen}
+                        onOpenChange={setIsUpdateModalOpen}
+                        user={selectedUser}
+                        plan={selectedPlan}
+                        onChangeState={(newPlan) => {
+                            setSelectedPlan(newPlan);
+                            setDataUserSubscription((prev) =>
+                                prev.map((user) =>
+                                    user.id === selectedUser.id
+                                        ? { ...user, subscriptionPlan: newPlan }
+                                        : user
+                                )
+                            );
+                        }}
+                    />
+                )}
+
+            { // Modal para registrar el pago de la suscripción
+                currentUserPayment && (
+                    <AlertDialogModalProps
+                        isOpen={isPaidDialogOpen}
+                        onOpenChange={setIsPaidDialogOpen}
+                        title="Registrar Pago de Suscripción"
+                        description={`¿Estás seguro de que deseas marcar la suscripción de ${currentUserPayment.name} como pagada?. 
+                        Una vez registrado el pago se almacenará en el historial de pagos, asegurate de que el pago se haya realizado antes de continuar.`}
+                        confirmText="Si, registrar pago"
+                        onclick={handleSavePaymentSubscription}
+                    />
+                )
+            }
+
         </Card>
     );
 }

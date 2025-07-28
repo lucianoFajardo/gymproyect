@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use server";
 
 import { db } from "@/lib/db";
@@ -28,7 +29,6 @@ export async function createPaymentServiceAction(service: ServicesModel) {
             data: newPaymentService
         }
     } catch (error) {
-        console.error("Error al crear el servicio de pago:", error);
         throw new Error("Error al crear el servicio de pago");
     }
 }

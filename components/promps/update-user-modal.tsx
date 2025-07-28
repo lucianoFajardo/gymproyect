@@ -136,66 +136,6 @@ export function UpdateUserModal({
                                 <FormMessage />
                             </FormItem>
                         )} />
-
-                        {/* <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="name">Nombre</Label>
-                                    <Input
-                                        id="name"
-                                        name="name" // Añadir name para accesibilidad y potencial uso con FormData
-                                        value={editForm.name}
-                                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                                    // required // Puedes añadir validación nativa si lo deseas
-                                    />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="lastname">Apellido</Label>
-                                    <Input
-                                        id="lastname"
-                                        name="lastname"
-                                        value={editForm.lastname}
-                                        onChange={(e) => setEditForm({ ...editForm, lastname: e.target.value })}
-                                    // required
-                                    />
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="phone">Teléfono</Label>
-                                    <Input
-                                        id="phone"
-                                        name="phone"
-                                        value={editForm.phone}
-                                        onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                                    // required
-                                    />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="age">Edad</Label>
-                                    <Input
-                                        id="age"
-                                        name="age"
-                                        type="number"
-                                        value={editForm.age} // Mantener como string aquí si editForm.age es string
-                                        onChange={(e) => setEditForm({ ...editForm, age: e.target.value })} // Guardar como string
-                                    // min="0" // Validación nativa para edad no negativa
-                                    // required
-                                    />
-                                </div>
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="gmail">Email</Label>
-                                <Input
-                                    id="gmail"
-                                    name="gmail"
-                                    type="email"
-                                    value={editForm.gmail}
-                                    onChange={(e) => setEditForm({ ...editForm, gmail: e.target.value })}
-                                // required
-                                />
-                            </div>
-                        </div> */}
                         <DialogFooter>
                             <DialogClose asChild>
                                 <Button type="button" variant="outline">Cancelar</Button>

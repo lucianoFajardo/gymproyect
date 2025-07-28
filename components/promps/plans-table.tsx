@@ -56,7 +56,7 @@ export default function PlansTable() {
         durationDaysPlan: 0,
         price: 0,
         description: "",
-    }); 
+    });
     const [isDeleteOpenDialog, setIsDeleteOpenDialog] = useState<boolean>(false);
     // Para el dialogo de eliminacion de un plan
     const [planToDeleteId, setPlanToDeleteId] = useState<string | null>(null);
@@ -236,6 +236,7 @@ export default function PlansTable() {
                                             </AlertDialog>
                                         </div>
                                     </TableCell>
+
                                 </TableRow>
                             ))
                         )}
