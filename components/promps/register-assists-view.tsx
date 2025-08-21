@@ -58,7 +58,7 @@ export default function RegisterAssistsView() {
     };
 
     return (
-        <Card className="w-full max-w-xl mx-auto my-10 shadow-lg">
+        <Card className="w-full max-w-xl mx-auto shadow-lg">
             <CardHeader className="text-center">
                 <CardTitle className="text-3xl font-bold flex items-center justify-center">
                     <QrCodeIcon className="mr-3 h-8 w-8 text-primary" /> Registrar Asistencia
@@ -69,7 +69,7 @@ export default function RegisterAssistsView() {
             </CardHeader>
             <CardContent>
                 <Tabs defaultValue="qr" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 mb-6">
+                    <TabsList className="grid w-full grid-cols-2 mb-4">
                         <TabsTrigger value="qr" className="py-3 text-sm">
                             <QrCodeIcon className="mr-2 h-5 w-5" /> Con Código QR
                         </TabsTrigger>

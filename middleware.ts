@@ -23,7 +23,7 @@ export async function middleware(request: NextRequest) {
 
     if (isAuthRoute) {
         if (isLoggedIn) {
-            return NextResponse.redirect(new URL("/dashboard/view-users", nextUrl));
+            return NextResponse.redirect(new URL("/dashboard", nextUrl));
         }
         return NextResponse.next();
     }

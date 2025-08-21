@@ -1,3 +1,5 @@
+/* Sidebar moderno y opción activa compatible con Tailwind y shadcn/ui */
+
 @import "tailwindcss";
 
 @plugin "tailwindcss-animate";
@@ -6,7 +8,6 @@
 
 body {
   min-height: 100vh;
-  background: linear-gradient(135deg, #dbeafe 0%, #f3e8ff 50%, #fbcfe8 100%);
 }
 
 @theme inline {
@@ -142,6 +143,16 @@ body {
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@keyframes waveMove {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(50%);
   }
 }
 

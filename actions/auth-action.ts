@@ -13,7 +13,6 @@ export const loginAction = async (values: z.infer<typeof LoginSchema>): Promise<
             redirect: false,
             redirectTo: "/dashboard/view-users",
         });
-
         if (result?.error) {
             // Si el error tiene más detalles, los mostramos    
             if (result.error.includes("Credenciales inválidas")) {
@@ -27,7 +26,7 @@ export const loginAction = async (values: z.infer<typeof LoginSchema>): Promise<
             return { error: result.error }; // Este es el error genérico
         }
         toast.success("Inicio de session exitoso");
-        setTimeout(() => { window.location.href = "/dashboard/view-users" }, 2000);  //* Demora la redirecion con un tiempo de 2ms
+        setTimeout(() => { window.location.href = "/dashboard/view-users" }, 2000);  //* Demora la redireccion con un tiempo de 2ms
         return { error: null }
 
     } catch (error) {

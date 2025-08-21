@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, EditIcon, EyeIcon, Mail, Phone, PlusCircle, Trash2, UserSearch } from "lucide-react"
+import { ChevronLeft, ChevronRight, EditIcon, EyeIcon, Mail, Phone, PlusCircle, Search, Trash2, UserSearch } from "lucide-react"
 import { getDataUserAction } from "@/actions/get-data-user-action"
 import { UserModel } from "../../Model/User-model"
 import checkSubscriptionExpiration from "@/actions/expiration-subscription-action"
@@ -17,19 +17,21 @@ import { AlertDialogModalProps } from "./alert-dialog-modal"
 import { UpdateUserModal } from "./update-user-modal"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@radix-ui/react-dropdown-menu"
+import { Input } from "@/components/ui/input"
 
 export default function UserTable() {
-    const ITEMS_PER_PAGE = 20; // Define cuántos usuarios mostrar por página
+    const ITEMS_PER_PAGE = 20;
     const [isLoading, setIsLoading] = useState(true);
     const [users, setUsers] = useState<UserModel[]>([])
-    const [totalUsers, setTotalUsers] = useState(0); // Nuevo estado
+    const [totalUsers, setTotalUsers] = useState(0);
     const [expireSubscription, setExpireSubscription] = useState<Record<string, string>>({});
     const [userStatusMap, setUserStatusMap] = useState<Record<string, string>>({});
     const [currentPage, setCurrentPage] = useState<number>(1);
+    const [searchTerm, setSearchTerm] = useState("");
 
     //* Obtener los datos de los usuarios al cargar el componente
     useEffect(() => {
-        setIsLoading(true); // Iniciar el estado de carga
+        setIsLoading(true);
         getDataUserAction({ page: currentPage, pageSize: ITEMS_PER_PAGE }).then((data) => {
             if (!data) {
                 toast.error("Error al cargar los usuarios", {
@@ -41,9 +43,9 @@ export default function UserTable() {
                 setTotalUsers(0);
                 return;
             }
-            setUsers(data.users); // Asignar los usuarios obtenidos
-            setTotalUsers(data.total); // Asignar el total de usuarios
-            setIsLoading(false); // Finalizar el estado de carga
+            setUsers(data.users);
+            setTotalUsers(data.total);
+            setIsLoading(false);
         })
     }, [currentPage]);
 
@@ -162,6 +164,13 @@ export default function UserTable() {
         }
     }
 
+    // Filtrar usuarios según searchTerm (buscando en nombre y apellido)
+    const filteredUsers = searchTerm
+        ? users.filter(user =>
+            `${user.name} ${user.lastname}`.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        : users;
+
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-screen">
@@ -173,18 +182,31 @@ export default function UserTable() {
 
     return (
         <Card className="rounded-md border overflow-x-auto m-2 border-gray-200 dark:border-gray-700">
-            <CardHeader className="border-b">
+            <CardHeader className="">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <CardTitle className="text-2xl font-bold">Gestiónar usuario</CardTitle>
                         <CardDescription>Visualiza, edita o elimina los datos del usuario asociados al gimnasio.</CardDescription>
                     </div>
-                    <Link href="/dashboard/members/create-user" passHref>
-                        <Button>
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Crear usuarios
-                        </Button>
-                    </Link>
+                    <div className="flex gap-2">
+                        {/* Input de búsqueda de usuarios */}
+                        <div className="relative">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                type="text"
+                                placeholder="Buscar usuario..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="max-w-xs pl-8"
+                            />
+                        </div>
+                        <Link href="/dashboard/members/create-user" passHref>
+                            <Button>
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Crear usuarios
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
             </CardHeader>
             <div className="rounded-lg overflow-x-auto m-4">
@@ -195,7 +217,7 @@ export default function UserTable() {
                             <TableHead className="text-white">Nombre</TableHead>
                             <TableHead className="text-white">Apellido</TableHead>
                             <TableHead className="text-white">Teléfono</TableHead>
-                            <TableHead className="text-white"> Edad</TableHead>
+                            <TableHead className="text-white">Edad</TableHead>
                             <TableHead className="text-white">Email</TableHead>
                             <TableHead className="text-white">Inicio Plan</TableHead>
                             <TableHead className="text-white">Vencimiento plan</TableHead>
@@ -204,15 +226,15 @@ export default function UserTable() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {users.length === 0 ? (
+                        {filteredUsers.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={11} className="text-center py-6 text-muted-foreground">
                                     No hay usuarios para mostrar
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            users.map((user) => (
-                                <TableRow key={user.id} className="hover:bg-green-50 dark:hover:bg-gray-800 transition-colors ">
+                            filteredUsers.map((user) => (
+                                <TableRow key={user.id} className="hover:bg-green-50 dark:hover:bg-gray-800 transition-colors">
                                     <TableCell className="font-medium">{user.name}</TableCell>
                                     <TableCell>{user.lastname}</TableCell>
                                     <TableCell>
@@ -225,7 +247,7 @@ export default function UserTable() {
                                                         rel="noopener noreferrer"
                                                         className="inline-flex items-center gap-1 hover:underline"
                                                     >
-                                                        <Badge className="bg-gray-200 text-gray-800 dark:bg-green-600 dark:text-green-200 cursor-pointer">
+                                                        <Badge className="bg-green-200 text-green-800 dark:bg-green-600 dark:text-green-200 cursor-pointer">
                                                             <Phone />
                                                             {user.phone}
                                                         </Badge>
@@ -253,19 +275,19 @@ export default function UserTable() {
                                             {new Date(user.startPlan).toLocaleDateString()}
                                         </span>
                                     </TableCell>
-                                    {/* aqui tiene que calcular la fecha de los clientes y sacarle cuando se le vence la subscripcion */}
                                     <TableCell>
                                         <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
                                             {expireSubscription[user.id]}
                                         </span>
                                     </TableCell>
-                                    {/* Cambiar el color del estado del plan según su valor */}
                                     <TableCell>
                                         {userStatusMap[user.id] ? (
                                             <span
-                                                className={`px-2 py-1 rounded-full text-xs ${userStatusMap[user.id] === "Activo" ? "bg-green-200 text-green-800 " :
-                                                    userStatusMap[user.id] === "Inactivo" ? "bg-red-200 text-red-800" :
-                                                        "bg-gray-100 text-gray-800" // Estilo por defecto 
+                                                className={`px-2 py-1 rounded-full text-xs ${userStatusMap[user.id] === "Activo"
+                                                    ? "bg-green-200 text-green-800"
+                                                    : userStatusMap[user.id] === "Inactivo"
+                                                        ? "bg-red-200 text-red-800"
+                                                        : "bg-gray-100 text-gray-800"
                                                     }`}
                                             >
                                                 {userStatusMap[user.id]}
@@ -323,24 +345,14 @@ export default function UserTable() {
             {/* Controles de Paginación */}
             {totalPages > 1 && (
                 <div className="flex items-center justify-end space-x-2 py-4 px-1">
-                    <Button
-                        variant="link"
-                        size="sm"
-                        onClick={handlePreviousPage}
-                        disabled={currentPage === 1}
-                    >
+                    <Button variant="link" size="sm" onClick={handlePreviousPage} disabled={currentPage === 1}>
                         <ChevronLeft className="h-4 w-4 mr-1" />
                         Anterior
                     </Button>
                     <span className="text-sm text-muted-foreground">
                         Página {currentPage} de {totalPages}
                     </span>
-                    <Button
-                        variant="link"
-                        size="sm"
-                        onClick={handleNextPage}
-                        disabled={currentPage === totalPages}
-                    >
+                    <Button variant="link" size="sm" onClick={handleNextPage} disabled={currentPage === totalPages}>
                         Siguiente
                         <ChevronRight className="h-4 w-4 ml-1" />
                     </Button>

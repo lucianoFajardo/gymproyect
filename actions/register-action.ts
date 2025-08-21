@@ -11,8 +11,7 @@ export const registerAction = async (values: z.infer<typeof RegisterSchema>) => 
     const { data, success } = await RegisterSchema.safeParse(values);
 
     if (!success) {
-        console.log("Error de validacion", data);
-        return;
+        throw new Error("Error de validacion");
     }
     const user = await db.user.findUnique({
         where: {
@@ -20,8 +19,7 @@ export const registerAction = async (values: z.infer<typeof RegisterSchema>) => 
         },
     })
     if (user) {
-        console.log("El usuario ya existe", user);
-        return;
+        throw new Error("El usuario ya existe");
     }
 
     //HASHEAR LA CONTRASEÑA
@@ -35,9 +33,5 @@ export const registerAction = async (values: z.infer<typeof RegisterSchema>) => 
             password: hashedPassword,
         },
     });
-
-    console.log("Usuario creado", newUser);
-
     return newUser;
-
 };

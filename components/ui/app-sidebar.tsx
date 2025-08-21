@@ -4,13 +4,12 @@
 import * as React from "react"
 import {
   CalendarCogIcon,
-  GalleryVerticalEnd,
   User,
   ScanQrCodeIcon,
   LucideShoppingBasket,
   Rabbit,
   HandCoins,
-  SquareActivity,
+  Dumbbell,
 } from "lucide-react"
 
 import { NavMain } from "@/components/ui/nav-main"
@@ -26,16 +25,11 @@ import {
 
 // This is sample data.
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   teams: [
     {
-      name: "DashboardGyms",
-      logo: GalleryVerticalEnd,
-      plan: "Administrador de gimnasios",
+      name: "Panel Gym",
+      logo: Dumbbell,
+      plan: "Administrador ",
     },
   ],
   navMain: [
@@ -45,16 +39,20 @@ const data = {
       icon: Rabbit,
       items: [
         {
+          title: "Inicio",
+          url: "/dashboard/",
+        },
+        {
           title: "Crear venta",
-          url: "/dashboard/#",
+          url: "/dashboard/sales/create-sales",
         },
         {
           title: "Registrar asistencia",
-          url: "/dashboard/#",
+          url: "/dashboard/assists/create-assists",
         },
         {
           title: "Activar subscripcion",
-          url: "/dashboard/#",
+          url: "/dashboard/plans/manage-subscriptions",
         },
       ],
     },
@@ -174,29 +172,29 @@ const data = {
         },
       ],
     },
-    {
-      title: "Gestion del gimnasio",
-      url: "#",
-      icon: SquareActivity,
-      items: [
-        {
-          title: "Ingresos y Egresos",
-          url: "/dashboard/manage-plans",
-        },
-        {
-          title: "Sueldos y pagos",
-          url: "/dashboard/manage-subscriptions",
-        },
-        {
-          title: "Gastos mensuales",
-          url: "#",
-        },
-        {
-          title: "Deudores",
-          url: "#",
-        },
-      ],
-    },
+    // {
+    //   title: "Gestion del gimnasio",
+    //   url: "#",
+    //   icon: SquareActivity,
+    //   items: [
+    //     {
+    //       title: "Ingresos y Egresos",
+    //       url: "/dashboard/manage-plans",
+    //     },
+    //     {
+    //       title: "Sueldos y pagos",
+    //       url: "/dashboard/manage-subscriptions",
+    //     },
+    //     {
+    //       title: "Gastos mensuales",
+    //       url: "#",
+    //     },
+    //     {
+    //       title: "Deudores",
+    //       url: "#",
+    //     },
+    //   ],
+    // },
   ],
 
 }
@@ -211,7 +209,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

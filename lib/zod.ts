@@ -124,3 +124,10 @@ export const serviceUpdateSchema = object({
         .regex(/^\+?\d{7,15}$/, { message: "Número de teléfono del proveedor no válido." }) // Regex simple para teléfono internacional
         .optional(),
 });
+
+export const UpdateAccountSchema = object({
+    name: string().min(2, { message: "El nombre debe tener al menos 2 caracteres." }).max(100),
+    email: string().min(5, { message: "El correo electrónico debe tener al menos 5 caracteres." }).max(100).email(),
+    password: string().min(8, { message: "La contraseña debe tener al menos 8 caracteres." }).optional(),
+    confirmPassword: string().min(8, { message: "La confirmación de la contraseña debe tener al menos 8 caracteres." }).optional(),
+})

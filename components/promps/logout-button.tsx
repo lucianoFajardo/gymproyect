@@ -20,5 +20,5 @@ export default function LogoutButton() {
         }
     };
 
-    return <Button onClick={handlerClick}>Cerrar sesión</Button>;
+    return <Button className="w-full" onClick={handlerClick}>Cerrar sesión</Button>;
 }

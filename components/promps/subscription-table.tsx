@@ -12,7 +12,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { CalendarDays, CheckCircle, ChevronLeft, ChevronRight, History, Replace } from 'lucide-react';
+import { CalendarDays, CheckCircle, ChevronLeft, ChevronRight, History, PlusCircle, Replace, Search } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { getDataUserActionWithSubscription } from '@/actions/get-data-user-action';
 import { UserModel } from '@/Model/User-model';
@@ -28,8 +28,9 @@ import { AlertDialogModalProps } from './alert-dialog-modal';
 import { createPaymentSubscriptionAction } from '@/actions/create-payment-subscription-action';
 import { SubscriptionHistoryPaymentModel } from '@/Model/Payment-subscription-model';
 import { getDataPaymentsSubscriptionAction } from '@/actions/get-data-payments-subscription-action';
-import { get } from 'http';
 import { HistoryModalPaymentSubs } from './history-modal-payment-subs';
+import { Input } from '../ui/input';
+import Link from 'next/link';
 
 export default function UserSubscriptionManagerTable() {
     const ITEMS_PER_PAGE = 15;
@@ -54,6 +55,8 @@ export default function UserSubscriptionManagerTable() {
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<dataFlitred | null>(null);
     const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlanModel | null>(null);
+
+    const [searchTerm, setSearchTerm] = useState("");
 
     const handleOpenUpdateModal = (user: dataFlitred, plan: SubscriptionPlanModel) => {
         setSelectedUser(user);
@@ -172,14 +175,33 @@ export default function UserSubscriptionManagerTable() {
         })
     }
 
+    const filteredUsers = searchTerm
+        ? dataUserSubscription.filter(user =>
+            `${user.name} ${user.startPlan}`.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        : dataUserSubscription;
+
 
     return (
         <Card className="m-4">
             <CardHeader>
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <CardTitle className="text-2xl font-bold">Gestion de subscripciones</CardTitle>
                         <CardDescription className='p-2'>Gestionar los datos de subscripciones, cambiar fechas de pago y planes</CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                        {/* Input de búsqueda de usuarios */}
+                        <div className="relative">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                type="text"
+                                placeholder="Buscar usuario..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="max-w-xs pl-8"
+                            />
+                        </div>
                     </div>
                 </div>
             </CardHeader>
@@ -198,14 +220,14 @@ export default function UserSubscriptionManagerTable() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {dataUserSubscription.length === 0 ? (
+                            {filteredUsers.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={6} className="text-center py-4">
                                         Cargando usuarios...
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                dataUserSubscription.map((user) => (
+                                filteredUsers.map((user) => (
                                     <TableRow key={user.id} className='hover:bg-green-50'>
                                         <TableCell className="font-medium">{user.name}</TableCell>
                                         <TableCell>

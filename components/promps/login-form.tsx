@@ -41,7 +41,6 @@ export function LoginForm({
 
     async function onSubmit(values: z.infer<typeof LoginSchema>) {
         const response = await loginAction(values);
-        //Si encuentro un error realizar esto
         if (response.error) {
             setError('Error de inicio de sesión, intente nuevamente');
         }
@@ -50,12 +49,6 @@ export function LoginForm({
     return (
         <div className={cn("flex flex-col gap-6")} >
             <Card>
-                <CardHeader className="text-center">
-                    <CardTitle className="text-xl">GymDashboard</CardTitle>
-                    <CardDescription>
-                        Ingresa a la aplicacion con tu cuenta
-                    </CardDescription>
-                </CardHeader>
                 <CardContent>
                     <Form {...form}>
                         <h1 className="text-2xl font-semibold text-center m-2">Iniciar sesion</h1>

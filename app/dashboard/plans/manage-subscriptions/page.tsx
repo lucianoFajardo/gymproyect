@@ -4,6 +4,6 @@ import React from 'react'
 
 export default function ManageSubscriptions() {
   return (
-    <SubscriptionTable/>
+    <SubscriptionTable />
   )
 }

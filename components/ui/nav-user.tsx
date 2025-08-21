@@ -2,9 +2,7 @@
 
 import {
   BadgeCheck,
-  Bell,
   ChevronsUpDown,
-  CreditCard,
   UserCircle
 } from "lucide-react"
 
@@ -31,12 +29,14 @@ import {
 import LogoutButton from "../promps/logout-button"
 import React from "react"
 import { useSession } from "next-auth/react"
+import Link from 'next/link'
 
 export function NavUser({
 
 }) {
   const { isMobile } = useSidebar()
   const { data: session } = useSession();
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -77,17 +77,9 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">
                 <BadgeCheck />
-                Administrar cuenta
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Cuentas
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell />
-                Notificaciones
+                <Link href="/dashboard/acounts/edit-account">Editar cuenta</Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
