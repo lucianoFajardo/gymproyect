@@ -1,11 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useSession } from "next-auth/react"
+import { UserSearch } from "lucide-react"
 
 export default function EditAccount() {
     const [name, setName] = useState("")
@@ -13,12 +14,12 @@ export default function EditAccount() {
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     const [error, setError] = useState("")
+    const [loading, setLoading] = useState(true)
     const { data: session } = useSession();
 
-    useEffect(() => {
-        const data = session?.user || {};
-        console.log(data)
-    }, [session])
+    setTimeout(() => {
+        setLoading(false)
+    }, 1000)
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -28,6 +29,15 @@ export default function EditAccount() {
         }
         setError("")
         console.log("Cuenta actualizada", { name, email, password })
+    }
+
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <UserSearch className="h-12 w-12 animate-pulse text-primary" />
+                <p className="ml-4 text-lg">Cargando data ...</p>
+            </div>
+        );
     }
 
     return (

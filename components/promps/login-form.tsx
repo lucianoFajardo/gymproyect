@@ -4,9 +4,6 @@ import { Button } from "@/components/ui/button"
 import {
     Card,
     CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
 } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { LoginSchema } from '@/lib/zod'
@@ -25,6 +22,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { loginAction } from '@/actions/auth-action'
 import { AlertCircle } from "lucide-react"
+import { toast } from "sonner"
 
 export function LoginForm({
 
@@ -42,8 +40,10 @@ export function LoginForm({
     async function onSubmit(values: z.infer<typeof LoginSchema>) {
         const response = await loginAction(values);
         if (response.error) {
+            toast.error(response.error);
             setError('Error de inicio de sesión, intente nuevamente');
         }
+        toast.message("Iniciando sesión...");
     }
 
     return (
@@ -102,7 +102,7 @@ export function LoginForm({
                 </AlertDescription>
             </Alert>}
             <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary  ">
-                Si tienes alguna duda o consulta contactate con nosotros, <a href="#">DevilCorp</a>{" "}
+                Si tienes alguna duda o consulta contactate con nosotros, <a href="#">LFdev@</a>{" "}
             </div>
         </div>
     )
